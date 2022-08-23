@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+option go_package = "github.com/armandmgt/expose/server/tunnelService";
+
+package tunnelService;
+
+service TunnelService {
+  rpc NewClient (NewClientRequest) returns (NewClientReply) {}
+  rpc Alive (AliveMessage) returns (AliveReply) {}
+  rpc NewTunnel (NewTunnelRequest) returns (NewTunnelReply) {}
+}
+
+message NewClientRequest {
+}
+
+message NewClientReply {
+  string UUID = 1;
+}
+
+message AliveMessage {
+  string ClientUUID = 1;
+}
+message AliveReply {}
+
+enum TunnelKind {
+  HTTP_TUNNEL = 0;
+  TCP_TUNNEL = 1;
+}
+
+message NewTunnelRequest {
+  string ClientUUID = 1;
+  TunnelKind Kind = 2;
+}
+
+message NewTunnelReply {
+  string Address = 1;
+}
