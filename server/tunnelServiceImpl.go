@@ -7,9 +7,9 @@ import (
 	"github.com/armandmgt/expose/server/clients"
 	"github.com/armandmgt/expose/server/tunnel"
 	"github.com/armandmgt/expose/server/tunnelService"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"log"
 )
 
 type server struct {
@@ -35,7 +35,7 @@ func (s *server) NewClient(_ context.Context, _ *tunnelService.NewClientRequest)
 	client := clients.NewClient()
 	clientsReg[client.UUID] = client
 
-	log.Println("TunnelService.NewClient: new client created ", clientsReg[client.UUID])
+	log.Debugf("New client created %v", clientsReg[client.UUID])
 	reply = &tunnelService.NewClientReply{UUID: client.UUID}
 	return
 }
@@ -67,9 +67,9 @@ func (s *server) NewTunnel(_ context.Context, args *tunnelService.NewTunnelReque
 			return nil, status.Error(codes.ResourceExhausted, err.Error())
 		}
 		client.Tunnel.Start()
-		reply.Address = client.Tunnel.(*tunnel.TcpTunnel).Address
+		reply.Address = client.Tunnel.(*tunnel.TCPTunnel).Address
 	}
-	log.Printf("TunnelService.NewTunnel: new tunnel created %v\n", client)
+	log.Debugf("New tunnel created %v", client)
 	return
 }
 

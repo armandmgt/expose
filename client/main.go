@@ -6,11 +6,11 @@ import (
 	"github.com/armandmgt/expose/assets"
 	"github.com/armandmgt/expose/server/clients"
 	"github.com/armandmgt/expose/server/tunnelService"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/oauth"
-	"log"
 	"os"
 	"os/signal"
 	"time"
@@ -20,9 +20,11 @@ func main() {
 	clientOpts := parseArgs()
 
 	perRPC := oauth.NewOauthAccess(fetchToken())
+
+	// Load fake certificate for development purposes
 	creds, err := credentials.NewClientTLSFromFile(assets.Path("x509/server.crt"), "")
 	if err != nil {
-		log.Fatalf("failed to load credentials: %v", err)
+		log.Fatalf("Failed to load credentials: %v", err)
 	}
 	opts := []grpc.DialOption{
 		grpc.WithPerRPCCredentials(perRPC),
@@ -31,7 +33,7 @@ func main() {
 
 	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", clientOpts.ServerName, clientOpts.ServerPort), opts...)
 	if err != nil {
-		log.Printf("did not connect: %v", err)
+		log.Fatalf("Failed to connect: %v", err)
 		return
 	}
 	defer func(conn *grpc.ClientConn) {
@@ -43,10 +45,9 @@ func main() {
 	defer cancel()
 	client, err := rgc.NewClient(ctx, &tunnelService.NewClientRequest{})
 	if err != nil {
-		log.Printf("rgc.NewClient(_) = _, %v: ", err)
-		return
+		log.Fatalf("Failed to  %v: ", err)
 	}
-	log.Println("NewClient: ", client.UUID)
+	log.Debugf("New client: %s", client.UUID)
 	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	tunnel, err := rgc.NewTunnel(ctx, &tunnelService.NewTunnelRequest{
@@ -54,10 +55,9 @@ func main() {
 		Kind:       tunnelService.TunnelKind_TCP_TUNNEL,
 	})
 	if err != nil {
-		log.Printf("rgc.NewTunnel(_) = _, %v: ", err)
-		return
+		log.Fatalf("Failed to create tunnel: %v", err)
 	}
-	log.Printf("NewTunnel: %s\n", tunnel.Address)
+	log.Infof("New tunnel: %s", tunnel.Address)
 	handleAndClean(rgc, client)
 }
 

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"github.com/armandmgt/expose/assets"
 	pb "github.com/armandmgt/expose/server/tunnelService"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -36,7 +36,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	log.Printf("Listening on port %d\n", proxyOpts.Port)
+	log.Infof("Listening on port %d", proxyOpts.Port)
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {

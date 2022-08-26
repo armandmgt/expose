@@ -1,14 +1,14 @@
 package tunnel
 
 import (
+	log "github.com/sirupsen/logrus"
 	"io"
-	"log"
 	"net"
 	"os"
 	"sync"
 )
 
-type TcpTunnel struct {
+type TCPTunnel struct {
 	Kind        Kind
 	listener    net.Listener
 	Address     string
@@ -17,8 +17,8 @@ type TcpTunnel struct {
 	connections []net.Conn
 }
 
-func NewTCP() (tun *TcpTunnel, err error) {
-	tun = &TcpTunnel{Kind: TcpTunnelKind, quit: make(chan interface{}), connections: []net.Conn{}}
+func NewTCP() (tun *TCPTunnel, err error) {
+	tun = &TCPTunnel{Kind: TcpTunnelKind, quit: make(chan interface{}), connections: []net.Conn{}}
 	l, err := net.Listen("tcp", "localhost:")
 	if err != nil {
 		return
@@ -28,14 +28,14 @@ func NewTCP() (tun *TcpTunnel, err error) {
 	return
 }
 
-func (tun *TcpTunnel) Start() {
+func (tun *TCPTunnel) Start() {
 	tun.wg.Add(1)
 	go tun.serve()
-	log.Printf("New tcp tunnel listening on address %s\n", tun.Address)
+	log.Tracef("TCPTunnel.Start: new tcp tunnel listening on address %s\n", tun.Address)
 }
 
-func (tun *TcpTunnel) Stop() (err error) {
-	//log.Printf("calling tunnel %p's Stop method\n", tun)
+func (tun *TCPTunnel) Stop() (err error) {
+	log.Tracef("calling tunnel %p's Stop method\n", tun)
 	close(tun.quit)
 	if err = tun.listener.Close(); err != nil {
 		return
@@ -47,7 +47,7 @@ func (tun *TcpTunnel) Stop() (err error) {
 	return
 }
 
-func (tun *TcpTunnel) serve() {
+func (tun *TCPTunnel) serve() {
 	defer tun.wg.Done()
 
 	for {
@@ -70,7 +70,7 @@ func (tun *TcpTunnel) serve() {
 	}
 }
 
-func (tun *TcpTunnel) handleTCPConn(conn net.Conn) {
+func (tun *TCPTunnel) handleTCPConn(conn net.Conn) {
 	defer func(conn net.Conn) {
 		_ = conn.Close()
 	}(conn)
