@@ -35,15 +35,13 @@ func (tun *TcpTunnel) Start() {
 }
 
 func (tun *TcpTunnel) Stop() (err error) {
-	log.Printf("calling tunnel %p's Stop method\n", tun)
+	//log.Printf("calling tunnel %p's Stop method\n", tun)
 	close(tun.quit)
 	if err = tun.listener.Close(); err != nil {
 		return
 	}
 	for _, c := range tun.connections {
-		if err = c.Close(); err != nil {
-			return err
-		}
+		_ = c.Close()
 	}
 	tun.wg.Wait()
 	return
