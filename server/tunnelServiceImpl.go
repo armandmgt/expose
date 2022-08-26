@@ -13,12 +13,12 @@ import (
 )
 
 type server struct {
-	Clients map[string]*clients.Client
 	tunnelService.UnimplementedTunnelServiceServer
+	ClientHandler *clients.Handler
 }
 
 func NewTunnelServer() *server {
-	return &server{Clients: make(map[string]*clients.Client)}
+	return &server{ClientHandler: clients.NewHandler()}
 }
 
 type NewTunnelArgs struct {
@@ -31,7 +31,7 @@ type NewTunnelReply struct {
 }
 
 func (s *server) NewClient(_ context.Context, _ *tunnelService.NewClientRequest) (reply *tunnelService.NewClientReply, err error) {
-	clientsReg := s.Clients
+	clientsReg := s.ClientHandler.Clients
 	client := clients.NewClient()
 	clientsReg[client.UUID] = client
 
@@ -40,7 +40,8 @@ func (s *server) NewClient(_ context.Context, _ *tunnelService.NewClientRequest)
 	return
 }
 
-func (s *server) Alive(_ context.Context, args *tunnelService.AliveMessage) (_ *tunnelService.AliveReply, err error) {
+func (s *server) Alive(_ context.Context, args *tunnelService.AliveMessage) (reply *tunnelService.AliveReply, err error) {
+	reply = &tunnelService.AliveReply{}
 	client, err := getClient(s, args.ClientUUID)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -68,12 +69,12 @@ func (s *server) NewTunnel(_ context.Context, args *tunnelService.NewTunnelReque
 		client.Tunnel.Start()
 		reply.Address = client.Tunnel.(*tunnel.TcpTunnel).Address
 	}
-	log.Println("TunnelService.NewTunnel: new tunnel created ", client)
+	log.Printf("TunnelService.NewTunnel: new tunnel created %v\n", client)
 	return
 }
 
 func getClient(s *server, uuid string) (client *clients.Client, err error) {
-	client, ok := s.Clients[uuid]
+	client, ok := s.ClientHandler.Clients[uuid]
 	if !ok {
 		return nil, errors.New(fmt.Sprintf("client %s not found", uuid))
 	}

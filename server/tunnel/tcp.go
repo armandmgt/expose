@@ -9,15 +9,16 @@ import (
 )
 
 type TcpTunnel struct {
-	Kind     Kind
-	listener net.Listener
-	Address  string
-	quit     chan interface{}
-	wg       sync.WaitGroup
+	Kind        Kind
+	listener    net.Listener
+	Address     string
+	quit        chan interface{}
+	wg          sync.WaitGroup
+	connections []net.Conn
 }
 
 func NewTCP() (tun *TcpTunnel, err error) {
-	tun = &TcpTunnel{Kind: TcpTunnelKind, quit: make(chan interface{})}
+	tun = &TcpTunnel{Kind: TcpTunnelKind, quit: make(chan interface{}), connections: []net.Conn{}}
 	l, err := net.Listen("tcp", "localhost:")
 	if err != nil {
 		return
@@ -34,9 +35,15 @@ func (tun *TcpTunnel) Start() {
 }
 
 func (tun *TcpTunnel) Stop() (err error) {
+	log.Printf("calling tunnel %p's Stop method\n", tun)
 	close(tun.quit)
 	if err = tun.listener.Close(); err != nil {
 		return
+	}
+	for _, c := range tun.connections {
+		if err = c.Close(); err != nil {
+			return err
+		}
 	}
 	tun.wg.Wait()
 	return
@@ -56,15 +63,16 @@ func (tun *TcpTunnel) serve() {
 			}
 		} else {
 			tun.wg.Add(1)
+			tun.connections = append(tun.connections, conn)
 			go func() {
-				tun.handleTcpConn(conn)
+				tun.handleTCPConn(conn)
 				tun.wg.Done()
 			}()
 		}
 	}
 }
 
-func (tun *TcpTunnel) handleTcpConn(conn net.Conn) {
+func (tun *TcpTunnel) handleTCPConn(conn net.Conn) {
 	defer func(conn net.Conn) {
 		_ = conn.Close()
 	}(conn)

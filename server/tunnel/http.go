@@ -10,3 +10,7 @@ func NewHTTP() *HttpTunnel {
 
 func (t *HttpTunnel) Start() {
 }
+
+func (t *HttpTunnel) Stop() error {
+	return nil
+}

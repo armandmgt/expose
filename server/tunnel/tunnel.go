@@ -2,6 +2,7 @@ package tunnel
 
 type Tunnel interface {
 	Start()
+	Stop() error
 }
 
 type Kind int

@@ -9,6 +9,9 @@ import (
 	"google.golang.org/grpc/credentials"
 	"log"
 	"net"
+	"os"
+	"os/signal"
+	"sync"
 )
 
 func main() {
@@ -27,13 +30,30 @@ func main() {
 		grpc.Creds(credentials.NewServerTLSFromCert(&cert)),
 	}
 	s := grpc.NewServer(opts...)
-	pb.RegisterTunnelServiceServer(s, NewTunnelServer())
+	tunnelServer := NewTunnelServer()
+	pb.RegisterTunnelServiceServer(s, tunnelServer)
 	lis, err := net.Listen("tcp", fmt.Sprintf("proxy.armandmgt.me:%d", uint16(proxyOpts.Port)))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	log.Printf("Listening on port %d\n", proxyOpts.Port)
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		if err := s.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
+		wg.Done()
+	}()
+	handleAndClean(s, tunnelServer)
+	wg.Wait()
+}
+
+func handleAndClean(s *grpc.Server, tunnelServer *server) {
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+	tunnelServer.ClientHandler.Stop()
+	s.Stop()
+	close(quit)
 }
