@@ -23,6 +23,7 @@ jobs:
         image: postgres:15
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_USER: expose
         ports: [ "5432:5432" ]
       redis:
         image: redis:7
@@ -32,8 +33,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Setup Ruby and install gems
-        uses: ruby/setup-ruby@477b21f02be01bcb8030d50f37cfec92bfa615b6
+        uses: ruby/setup-ruby@93287a1fa82c6ddbb6d8db978df4b0119cd8879f
         with:
           bundler-cache: true
+      - name: Setup test database
+        run: bin/rails db:setup
       - name: Run all tests
         run: bundle exec rake test:all
