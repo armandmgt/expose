@@ -1,0 +1,8 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: 'CLI Connection 1'
+  subdomain: 'subdomain-1'
+  proxied_port: '3000'
+  alive_at: <%= Time.current %>
+  user: one

@@ -2,17 +2,29 @@
   <div class="flex items-center justify-between">
     <div class="min-w-0 flex-1">
       <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
-        <%= header_name %>
+        <%= content_for?(:title) ? content_for(:title) : controller_name.humanize %>
       </h2>
-
     </div>
-    <div class="flex ml-4">
+
+    <% if current_user.present? %>
+      <div class="flex ml-4">
       <span>
-        <%= button_to destroy_user_session_path, data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' }, class: "inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" do %>
-          Sign out
-          <%= octicon :'sign-out', class: "-mr-1 ml-2 h-5 w-5 text-gray-500" %>
+        <%= link_to edit_user_path(current_user), class: "inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" do %>
+          <%= octicon :person, class: "-mx-1 h-5 w-5 text-gray-500" %>
         <% end %>
       </span>
-    </div>
+        <span class="ml-2">
+        <%= button_to destroy_user_session_path, method: :delete, data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' }, class: "inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" do %>
+          Sign out
+            <%= octicon :'sign-out', class: "-mr-1 ml-2 h-5 w-5 text-gray-500" %>
+        <% end %>
+      </span>
+      </div>
+    <% end %>
   </div>
+  <% unless current_page? root_path %>
+    <div class="mt-4">
+      <%= link_to 'Back to home', root_path, class: 'underline text-slate-500 text-sm' %>
+    </div>
+  <% end %>
 </div>

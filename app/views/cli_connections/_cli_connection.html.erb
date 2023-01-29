@@ -1,0 +1,28 @@
+<div id="<%= dom_id cli_connection %>" class="overflow-hidden bg-white sm:shadow sm:rounded-lg">
+  <div class="px-4 py-5 sm:px-6">
+    <h3 class="text-lg font-medium leading-6 text-gray-900">CLI Connection Information</h3>
+    <p class="mt-1 max-w-2xl text-sm text-gray-500">Created <%= local_time_ago(cli_connection.created_at, :short) %></p>
+  </div>
+  <div>
+    <dl class="border-t border-gray-200">
+      <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+        <dt class="text-sm font-medium text-gray-500">Name</dt>
+        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0"><%= cli_connection.name %></dd>
+      </div>
+    </dl>
+    <dl class="border-t border-gray-200">
+      <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+        <dt class="text-sm font-medium text-gray-500">Domain</dt>
+        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+          <%= cli_connection.subdomain %>.<%= request.host %>
+        </dd>
+      </div>
+    </dl>
+    <dl class="border-t border-gray-200">
+      <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+        <dt class="text-sm font-medium text-gray-500">Proxy listen address</dt>
+        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0"><%= cli_connection.proxied_port %></dd>
+      </div>
+    </dl>
+  </div>
+</div>

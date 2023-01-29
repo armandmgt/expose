@@ -1,0 +1,29 @@
+<%- title 'Account' %>
+<div class="sm:p-4">
+  <div class="md:grid md:grid-cols-3 md:gap-6">
+    <div class="mt-5 md:col-span-2 md:mt-0">
+      <%= form_for(current_user) do |f| %>
+        <div class="overflow-hidden sm:shadow sm:rounded-md">
+          <div class="bg-white px-4 py-5 sm:p-6">
+            <div class="grid grid-cols-6 gap-6">
+
+              <div data-controller="api-token-generator" class="col-span-12">
+                <%= f.label :api_token, class: "block text-sm font-medium text-gray-700" %>
+                <div class="flex mt-1">
+                  <%= f.text_field :api_token, readonly: true, data: { 'api-token-generator-target': 'inputField' }, class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 read-only:bg-slate-50 read-only:text-slate-500 read-only:border-slate-200 read-only:shadow-none sm:text-sm" %>
+                  <%= button_tag type: 'button', data: { action: 'api-token-generator#generate'}, class: "ml-2 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" do %>
+                    <%= octicon :sync %>
+                  <% end %>
+                </div>
+              </div>
+
+            </div>
+          </div>
+          <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
+            <%= f.submit "Save", class: "inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

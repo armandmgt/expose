@@ -1,0 +1,43 @@
+<%- title 'CLI Connection' %>
+<div class="sm:p-4">
+  <div class="md:grid md:grid-cols-3 md:gap-6">
+    <div class="mt-5 md:col-span-2 md:mt-0">
+      <div class="overflow-hidden sm:shadow sm:rounded-md">
+        <div class="bg-white ">
+          <div class="px-4 py-5 sm:px-5 sm:py-6">
+            <h3 class="text-xl font-bold leading-3 text-gray-800 sm:truncate sm:text-xl sm:tracking-tight">
+              How to create a new connection
+            </h3>
+          </div>
+          <hr/>
+          <div class="px-4 py-5 sm:px-5 sm:py-6">
+            <div data-controller="copy-button" class="flex flex-row">
+              <div class="rounded-md bg-stone-800 text-white overflow-scroll" data-copy-button-target="contentNode">
+                <div class=" mx-4 my-3">
+                  <code class="block whitespace-nowrap shell-cmd">expose-cli -H <%= request.host_with_port %>
+                    -s <%= [current_user.email, current_user.api_token].join(':') %> -p 8000</code>
+                </div>
+              </div>
+              <button data-action="copy-button#copy" class="ml-2 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                <span class="copy-icon"><%= octicon :copy %></span>
+                <span class="success-icon fill-green-500 hidden"><%= octicon :check %></span>
+                <span class="failure-icon fill-red-500 hidden"><%= octicon :x %></span>
+              </button>
+            </div>
+
+            <div class="mt-2">
+              Enjoy !
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+    .shell-cmd:before {
+        content: 'sh$ ';
+        opacity: 0.5;
+    }
+</style>

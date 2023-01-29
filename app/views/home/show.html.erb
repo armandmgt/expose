@@ -1,2 +1,44 @@
-<%= render 'shared/header', header_name: 'Home', signout_button: true %>
-<p>Find me in app/views/home/show.html.erb</p>
+<%- title 'Home' %>
+
+<div class="sm:p-4">
+  <div class="md:grid md:grid-cols-3 md:gap-6">
+    <div class="mt-5 md:col-span-2 md:mt-0">
+      <div class="overflow-hidden sm:shadow sm:rounded-md">
+        <div class="bg-white ">
+          <div class="px-4 py-5 sm:px-5 sm:py-6">
+            <h3 class="text-xl font-bold leading-3 text-gray-800 sm:truncate sm:text-xl sm:tracking-tight">
+              Current CLI Connections
+            </h3>
+          </div>
+          <hr/>
+          <div class="px-4 py-5 sm:px-5 sm:py-6">
+            <div class="grid grid-cols-1 gap-6">
+              <% if @cli_connections.empty? %>
+                <p class="text-center text-slate-700">
+                  There are no currently active connections<br/>
+                  <%= link_to 'Learn how to create a new one', new_cli_connection_path, class: 'underline text-slate-700' %>
+                </p>
+              <% end %>
+              <% @cli_connections.each do |cli_connection| %>
+                <div class="flex">
+                  <div class="flex-1">
+                    <div class="text-slate-900">
+                      CLI Connection <span class="font-medium"><%= cli_connection.name -%></span>
+                    </div>
+                    <div class="text-slate-700">
+                      Redirects <%= cli_connection.subdomain %> to <%= cli_connection.proxied_port %>
+                    </div>
+                    <%= link_to 'Inspect', cli_connection_path(cli_connection), class: 'underline text-indigo-700' %>
+                  </div>
+                  <div class="text-sm text-slate-600">
+                    <%= local_time_ago(cli_connection.created_at, :short) %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
