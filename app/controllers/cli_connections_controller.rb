@@ -37,7 +37,7 @@ class CliConnectionsController < ApplicationController
     @cli_connection.destroy
 
     respond_to do |format|
-      format.html { redirect_to root_path, notice: 'CLI Connection was successfully destroyed.' }
+      format.html { redirect_to root_path, notice: I18n.t('cli_connection.destroy.success_notice') }
       format.json { head :no_content }
     end
   end

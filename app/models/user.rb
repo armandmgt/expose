@@ -6,7 +6,7 @@ class User < ApplicationRecord
   devise :database_authenticatable,
          :recoverable, :rememberable, :validatable
 
-  has_many :cli_connections
+  has_many :cli_connections, dependent: :destroy
 
   before_save :ensure_api_token
 

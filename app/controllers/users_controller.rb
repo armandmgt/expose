@@ -5,7 +5,7 @@ class UsersController < ApplicationController
 
   def update
     if current_user.update(user_params)
-      redirect_to :edit_user, notice: 'CLI Connection was successfully updated.'
+      redirect_to :edit_user, notice: I18n.t('cli_connection.update.success_notice')
     else
       redirect_to :edit_user, status: :unprocessable_entity
     end

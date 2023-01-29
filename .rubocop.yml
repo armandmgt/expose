@@ -5,3 +5,12 @@ require:
 
 AllCops:
   NewCops: enable
+
+# Style cops
+Style/Documentation:
+  Enabled: false
+
+# Metrics cops
+Metrics/BlockLength:
+  Exclude:
+    - 'config/**/*.rb'

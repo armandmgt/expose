@@ -31,3 +31,8 @@
 
 en:
   hello: "Hello world"
+  cli_connection:
+    destroy:
+      success_notice: "CLI Connection was successfully destroyed."
+    update:
+      success_notice: "CLI Connection was successfully updated."
