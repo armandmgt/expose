@@ -36,7 +36,7 @@ class CliConnectionsControllerTest < ActionDispatch::IntegrationTest
 
   test 'should update cli_connection' do
     patch cli_connection_url(@cli_connection), params: { cli_connection: { alive_at: Time.current } }.to_json,
-                                               headers: json_header
+      headers: json_header
 
     assert_response :success
   end

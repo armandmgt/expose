@@ -23,6 +23,7 @@ end
 
 group :development do
   gem 'foreman'
+  gem 'reloadable_middleware'
   gem 'rubocop', '~> 1.44', require: false
   gem 'rubocop-minitest', require: false
   gem 'rubocop-performance', require: false

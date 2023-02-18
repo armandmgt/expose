@@ -20,5 +20,10 @@ module Expose
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    config.proxy = config_for(:proxy)
+    config.hosts += config.proxy['hostnames'].compact.flat_map do |hostname|
+      [hostname, ".#{hostname}"]
+    end
   end
 end

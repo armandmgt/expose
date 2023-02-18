@@ -1,0 +1,12 @@
+development:
+  hostnames:
+    - proxy.armandmgt.me
+    - <%= ENV.fetch('HOSTNAME', nil) %>
+
+production:
+  hostnames:
+    - <%= ENV.fetch('HOSTNAME', nil) %>
+
+test:
+  hostnames:
+    - <%= ENV.fetch('HOSTNAME', nil) %>

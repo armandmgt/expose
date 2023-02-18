@@ -189,6 +189,7 @@ GEM
     regexp_parser (2.6.2)
     reline (0.3.2)
       io-console (~> 0.5)
+    reloadable_middleware (1.0.1)
     responders (3.0.1)
       actionpack (>= 5.0)
       railties (>= 5.0)
@@ -279,6 +280,7 @@ DEPENDENCIES
   puma (~> 5.0)
   rails (~> 7.0.4, >= 7.0.4.1)
   redis (~> 4.0)
+  reloadable_middleware
   rubocop (~> 1.44)
   rubocop-minitest
   rubocop-performance
