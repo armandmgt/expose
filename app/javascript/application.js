@@ -3,3 +3,4 @@ import "@hotwired/turbo-rails"
 import "controllers"
 import LocalTime from "local-time-cdn"
 LocalTime.start()
+import "channels"

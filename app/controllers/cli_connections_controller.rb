@@ -8,7 +8,7 @@ class CliConnectionsController < ApplicationController
 
   # GET /cli_connections/new
   def new
-    @cli_connection = CliConnection.new
+    @cli_connection = current_user.cli_connections.new
   end
 
   # POST /cli_connections.json

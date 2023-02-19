@@ -21,20 +21,23 @@ default: &default
   # https://guides.rubyonrails.org/configuring.html#database-pooling
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
 
-development:
-  <<: *default
-  database: expose_development
+local: &local
   username: expose
   host: localhost
+  port: 5433
+
+development:
+  <<: *default
+  <<: *local
+  database: expose_development
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
 # Do not set this db to the same as development or production.
 test:
   <<: *default
+  <<: *local
   database: expose_test
-  username: expose
-  host: localhost
 
 production:
   <<: *default

@@ -10,7 +10,21 @@ AllCops:
 Style/Documentation:
   Enabled: false
 
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: comma
+
+# Layout cops
+Layout/ArgumentAlignment:
+  EnforcedStyle: with_fixed_indentation
+
+Layout/FirstHashElementIndentation:
+  EnforcedStyle: consistent
+
 # Metrics cops
+Metrics/MethodLength:
+  Exclude:
+    - 'db/**/*.rb'
+
 Metrics/BlockLength:
   Exclude:
     - 'config/**/*.rb'
