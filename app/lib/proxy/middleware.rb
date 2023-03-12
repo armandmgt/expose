@@ -29,7 +29,12 @@ module Proxy
     end
 
     def proxy
-      [200, {}, ['Success!']]
+      cli_connection = CliConnection.find_by_subdomain(subdomain)
+      proxy_conn = TCPSocket.new("0.0.0.0", cli_connection.proxy_connection_port.to_i)
+      IO.copy_stream(@request.body_stream, proxy_conn)
+      proxy_conn.close
+      @request.body_stream.rewind
+      [200, {}, ["Success! #{cli_connection.name}"]]
     end
   end
 end

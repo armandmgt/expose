@@ -24,7 +24,9 @@ module Proxy
 
     def pinged; end
 
-    def forward(request); end
+    def forward(request)
+      ;
+    end
 
     def shutdown
       @proxy_connections.each do |r|
@@ -36,24 +38,32 @@ module Proxy
     private
 
     def proxy_ractor(connection)
-      initial_msg = {
-        connection: Ractor.make_shareable(connection, copy: true),
-        time_zone: Ractor.make_shareable(Time.zone, copy: true),
-        logger: Ractor.make_shareable(Rails.logger, copy: true),
-      }
-      Ractor.new(initial_msg, name: "proxy-conn-#{connection.name}") do |msg|
-        c, tz, logger = msg.values_at(:connection, :time_zone, :logger)
+      Ractor.new(name: "proxy-conn-#{connection.name}") do
         proxy_server = TCPServer.new('0.0.0.0', 0)
         upstream_server = TCPServer.new('0.0.0.0', 0)
         Ractor.yield({
           proxy_port: proxy_server.addr[1],
           upstream_port: upstream_server.addr[1],
         })
-        logger.info('after Ractor.yield')
+        msg_pipe = Ractor.new do
+          loop { Ractor.yield(Ractor.recv) }
+        end
         loop do
-          tcp_conn, = upstream_server.accept
-          c.update(alive_at: tz.now)
-          tcp_conn.puts 'HELLO'
+          tcp_conn = upstream_server.accept
+          Ractor.new(msg_pipe, tcp_conn, name: "#{Ractor.current.name}-upstream-writer") do |msg_pipe, upstream_conn|
+            loop do
+              msg = msg_pipe.take
+              upstream_conn.write(msg)
+            end
+          end
+          Ractor.new(msg_pipe, proxy_server, name: "#{Ractor.current.name}-proxy-reader") do |msg_pipe, serv|
+            loop do
+              proxy_conn = serv.accept
+              msg = proxy_conn.read
+              msg_pipe.send(msg, move: true)
+              proxy_conn.close
+            end
+          end
           tcp_conn.close
         end
       end
