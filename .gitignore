@@ -1,2 +1,13 @@
 /target
+
+conf/*.json
+!conf/default.json
+
+static/css/main.css
+static/css/main.min.css
+
+.env
+
+node_modules/
+
 tags
