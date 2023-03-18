@@ -1,8 +1,10 @@
 use actix_web::{HttpResponse, web, get, post, delete, guard};
+use actix_files as fs;
 use serde::Deserialize;
 use sqlx::PgPool;
 use crate::errors::*;
 use crate::models::connection::Connection;
+use crate::settings::Settings;
 use crate::views::connections::*;
 
 #[get("")]
@@ -43,10 +45,12 @@ pub async fn delete(db: web::Data<PgPool>, path: web::Path<String>) -> AppRespon
     Ok(HttpResponse::Ok().content_type("application/json").body(body))
 }
 
-pub fn urls(cfg: &mut web::ServiceConfig) {
+pub fn urls(settings: &Settings, cfg: &mut web::ServiceConfig) {
     cfg.service(web::scope("/connections")
+        .guard(guard::Host(settings.http.url.host().unwrap().to_string()))
         .guard(guard::Header("Content-Type", "application/json"))
         .service(index)
         .service(create)
-        .service(delete));
+        .service(delete))
+        .service(fs::Files::new("/static", &settings.files.static_dir));
 }

@@ -1,9 +1,10 @@
 mod connections;
-mod request;
+mod proxy;
 pub(crate) mod types;
 
 use actix_web::{HttpResponse, get, web};
 use crate::errors::*;
+use crate::settings::Settings;
 use crate::views::*;
 
 #[get("/")]
@@ -13,8 +14,8 @@ pub async fn index() -> AppResponse {
     Ok(HttpResponse::Ok().content_type("text/html").body(body))
 }
 
-pub fn urls(cfg: &mut web::ServiceConfig) {
+pub fn urls(settings: &Settings, cfg: &mut web::ServiceConfig) {
     cfg.service(index)
-        .configure(connections::urls)
-        .configure(request::urls);
+        .configure(|cfg| connections::urls(settings, cfg))
+        .configure(|cfg| proxy::urls(settings, cfg));
 }

@@ -1,10 +1,10 @@
-GET http://localhost:8080/connections
+GET http://proxy.armandmgt.me:8080/connections
 Content-Type: application/json
 Accept: application/json
 
 ###
 
-POST http://localhost:8080/connections
+POST http://proxy.armandmgt.me:8080/connections
 Content-Type: application/json
 Accept: application/json
 
@@ -15,6 +15,6 @@ Accept: application/json
 
 ###
 
-DELETE http://localhost:8080/connections/92800fa9-b465-4cb0-8c9b-92587447ee10
+DELETE http://proxy.armandmgt.me:8080/connections/92800fa9-b465-4cb0-8c9b-92587447ee10
 Content-Type: application/json
 Accept: application/json

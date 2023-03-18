@@ -14,6 +14,7 @@ pub struct Http {
     pub url: Url,
     pub secure: bool,
     pub secret: String,
+    pub vhost_suffix: String,
 }
 
 #[derive(Debug, Deserialize)]

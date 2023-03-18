@@ -3,9 +3,10 @@ mod models;
 mod views;
 mod controllers;
 mod errors;
+mod middlewares;
+mod util;
 
 use actix_web::{App, HttpServer, middleware, web};
-use actix_files as fs;
 use actix_web::middleware::TrailingSlash::Trim;
 use sqlx::postgres::PgPoolOptions;
 
@@ -21,8 +22,6 @@ async fn main() -> std::io::Result<()> {
         .expect("error creating db pool");
     sqlx::migrate!().run(&pool).await.unwrap();
 
-    let static_dir = settings.files.static_dir.clone();
-
     let pool_data = web::Data::new(pool);
     let settings_data = web::Data::new(settings);
 
@@ -35,8 +34,8 @@ async fn main() -> std::io::Result<()> {
                 r#"%a %{X-Real-IP}i %t "%r" %s %b "%{Referer}i" "%{User-Agent}i" %T"#,
             ))
             .wrap(middleware::Compress::default())
-            .configure(controllers::urls)
-            .service(fs::Files::new("/static", &static_dir))
+            // .wrap(middlewares::vhost::VHost::new(settings_data.http.vhost_suffix.clone()))
+            .configure(|cfg| controllers::urls(&settings_data, cfg))
     })
         .bind(("127.0.0.1", 8080))?
         .run()

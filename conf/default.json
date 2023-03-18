@@ -3,9 +3,10 @@
     "url": "postgres://dummy"
   },
   "http": {
-    "url": "http://localhost:8080",
+    "url": "http://proxy.armandmgt.me:8080",
     "secure": false,
-    "secret": ""
+    "secret": "",
+    "vhost_suffix": ".proxy.armandmgt.me"
   },
   "files": {
     "static_dir": "static"
