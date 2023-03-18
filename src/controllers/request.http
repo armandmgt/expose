@@ -1,0 +1,8 @@
+POST http://localhost:8080/request
+Content-Type: application/json
+Accept: application/json
+
+{
+  "content": "test"
+}
+

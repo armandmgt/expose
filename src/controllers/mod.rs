@@ -1,4 +1,6 @@
 mod connections;
+mod request;
+pub(crate) mod types;
 
 use actix_web::{HttpResponse, get, web};
 use crate::errors::*;
@@ -13,5 +15,6 @@ pub async fn index() -> AppResponse {
 
 pub fn urls(cfg: &mut web::ServiceConfig) {
     cfg.service(index)
-        .configure(connections::urls);
+        .configure(connections::urls)
+        .configure(request::urls);
 }
