@@ -796,6 +796,8 @@ dependencies = [
  "env_logger",
  "log",
  "reqwest",
+ "serde",
+ "serde_json",
  "shared",
 ]
 
@@ -900,6 +902,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "futures-io"
+version = "0.3.27"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89d422fa3cbe3b40dca574ab087abb5bc98258ea57eea3fd6f1fa7162c778b91"
+
+[[package]]
 name = "futures-macro"
 version = "0.3.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -929,9 +937,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3ef6b17e481503ec85211fed8f39d1970f128935ca1f814cd32ac4a6842e84ab"
 dependencies = [
  "futures-core",
+ "futures-io",
  "futures-macro",
  "futures-sink",
  "futures-task",
+ "memchr",
  "pin-project-lite",
  "pin-utils",
  "slab",
@@ -2038,6 +2048,7 @@ dependencies = [
 name = "shared"
 version = "0.1.0"
 dependencies = [
+ "derive_more",
  "serde",
  "serde_json",
 ]

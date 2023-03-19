@@ -3,7 +3,6 @@ mod models;
 mod views;
 mod controllers;
 mod errors;
-mod middlewares;
 mod util;
 
 use actix_web::{App, HttpServer, middleware, web};

@@ -28,14 +28,17 @@ pub struct Options {
 }
 
 fn main() {
-    env_logger::init();
-
     let options = Options::parse();
-    let connection = match Connection::create(options) {
+    env_logger::Builder::new()
+        .filter_level(options.verbose.log_level_filter())
+        .init();
+
+    let connection = match Connection::create(&options) {
         Ok(v) => v,
         Err(e) => {
             error!("{:?}", e);
             return
         }
     };
+    connection.delete(&options).unwrap();
 }

@@ -17,3 +17,9 @@ impl Display for Error {
 }
 
 impl std::error::Error for Error {}
+
+impl From<reqwest::Error> for Error {
+    fn from(value: reqwest::Error) -> Self {
+        Self{reason: value.to_string()}
+    }
+}
