@@ -1,6 +1,5 @@
-mod connections;
+pub mod connections;
 mod proxy;
-pub(crate) mod types;
 
 use actix_web::{HttpResponse, get, web};
 use crate::errors::*;

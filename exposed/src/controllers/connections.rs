@@ -1,7 +1,7 @@
 use actix_web::{HttpResponse, web, get, post, delete, guard};
 use actix_files as fs;
-use serde::Deserialize;
 use sqlx::PgPool;
+use shared::dto::connection::CreateConnection;
 use crate::errors::*;
 use crate::models::connection::Connection;
 use crate::settings::Settings;
@@ -16,12 +16,6 @@ pub async fn index(db: web::Data<PgPool>) -> AppResponse {
     let index_view = Index::new(&connection_views);
     let body = serde_json::to_string(&index_view).unwrap();
     Ok(HttpResponse::Ok().content_type("application/json").body(body))
-}
-
-#[derive(Deserialize)]
-pub struct CreateConnection {
-    subdomain: String,
-    proxied_port: String,
 }
 
 #[post("")]

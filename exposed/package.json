@@ -2,8 +2,8 @@
   "name": "expose",
   "scripts": {
     "build": "yarn run build-css && yarn run compress",
-    "build-css": "yarn run tailwindcss build tailwind.css -o ./static/css/main.css",
-    "compress": "yarn -s run minify ./static/css/main.css > ./static/css/main.min.css"
+    "build-css": "yarn run tailwindcss build tailwind.css -o ../static/css/main.css",
+    "compress": "yarn -s run minify ../static/css/main.css > ./static/css/main.min.css"
   },
   "devDependencies": {
     "autoprefixer": "^10.2.5",
