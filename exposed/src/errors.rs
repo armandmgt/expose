@@ -30,6 +30,8 @@ pub enum AppError {
     TemplateError(#[from] askama::Error),
     #[error("database error {0}")]
     DatabaseError(#[from] sqlx::Error),
+    #[error("actor error")]
+    ActixMailboxError(#[from] actix::MailboxError),
     #[error("not found")]
     NotFound,
     #[error("missing permission: {0}")]

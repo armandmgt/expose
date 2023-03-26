@@ -1,11 +1,13 @@
-use actix_web::{HttpResponse, web, get, post, delete, guard};
-use actix_files as fs;
+use actix::Addr;
+use actix_web::{HttpResponse, web, get, post, delete, guard, HttpRequest};
+use actix_web_actors::ws;
 use sqlx::PgPool;
 use shared::dto::connection::{ConnectionView, CreateConnection, ShowView};
 use crate::errors::*;
 use crate::models::connection::Connection;
 use crate::settings::Settings;
 use crate::views::connections::*;
+use crate::websockets;
 
 #[get("")]
 pub async fn index(db: web::Data<PgPool>) -> AppResponse {
@@ -39,12 +41,26 @@ pub async fn delete(db: web::Data<PgPool>, path: web::Path<String>) -> AppRespon
     Ok(HttpResponse::Ok().content_type("application/json").body(body))
 }
 
+#[get("/{uuid}/subscribe")]
+pub async fn subscribe(
+    req: HttpRequest,
+    path: web::Path<String>,
+    stream: web::Payload,
+    conn_server: web::Data<Addr<websockets::server::ConnectionsWsServer>>,
+) -> AppResponse {
+    ws::start(websockets::session::ConnectionSession::new(
+        path.into_inner(),
+        conn_server.get_ref().clone(),
+    ), &req, stream).map_err(AppError::ActixError)
+}
+
 pub fn urls(settings: &Settings, cfg: &mut web::ServiceConfig) {
     cfg.service(web::scope("/connections")
         .guard(guard::Host(settings.http.url.host().unwrap().to_string()))
-        .guard(guard::Header("Content-Type", "application/json"))
-        .service(index)
-        .service(create)
-        .service(delete))
-        .service(fs::Files::new("/static", &settings.files.static_dir));
+        .service(web::scope("")
+            .guard(guard::Header("Content-Type", "application/json"))
+            .service(index)
+            .service(create)
+            .service(delete))
+        .service(subscribe));
 }

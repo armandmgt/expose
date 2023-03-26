@@ -1,9 +1,10 @@
 mod connection;
 mod error;
 
+use actix_rt;
 use clap::Parser;
-use log::error;
 use crate::connection::Connection;
+use crate::error::Error;
 
 #[derive(Parser, Debug)]
 #[command(version, about)]
@@ -27,18 +28,14 @@ pub struct Options {
     verbose: clap_verbosity_flag::Verbosity,
 }
 
-fn main() {
+#[actix_rt::main]
+async fn main() -> Result<(), Error> {
     let options = Options::parse();
     env_logger::Builder::new()
         .filter_level(options.verbose.log_level_filter())
         .init();
 
-    let connection = match Connection::create(&options) {
-        Ok(v) => v,
-        Err(e) => {
-            error!("{:?}", e);
-            return
-        }
-    };
-    connection.delete(&options).unwrap();
+    let connection = Connection::create(&options).await?;
+    connection.subscribe(&options).await?;
+    connection.delete(&options).await
 }

@@ -1,8 +1,74 @@
-use std::ops::Deref;
-use reqwest::{blocking::{Response}, Url};
+use actix::{Actor, ActorContext, Addr, AsyncContext, Context, StreamHandler};
+use actix::io::SinkWrite;
+use actix_codec::Framed;
+use awc::{BoxedSocket, ws};
+use awc::error::WsProtocolError;
+use awc::http::header::CONTENT_TYPE;
+use awc::ws::Message::Pong;
+use futures_util::stream::{SplitSink, SplitStream};
+use futures_util::StreamExt;
+use log::{debug, info};
+use shared::dto;
 use shared::dto::connection::{ShowView};
 use crate::error::Error;
 use crate::Options;
+
+type WsFramedSink = SplitSink<Framed<BoxedSocket, ws::Codec>, ws::Message>;
+type WsFramedStream = SplitStream<Framed<BoxedSocket, ws::Codec>>;
+
+struct WsClient {
+    sink: SinkWrite<ws::Message, WsFramedSink>,
+}
+
+impl WsClient {
+    pub fn start(sink: WsFramedSink, stream: WsFramedStream) -> Addr<Self> {
+        WsClient::create(|ctx| {
+            ctx.add_stream(stream);
+            WsClient {
+                sink: SinkWrite::new(sink, ctx),
+            }
+        })
+    }
+}
+
+impl Actor for WsClient {
+    type Context = Context<Self>;
+
+    fn started(&mut self, _ctx: &mut Context<Self>) {
+        info!("WsClient started");
+    }
+}
+
+impl actix::io::WriteHandler<WsProtocolError> for WsClient {}
+
+impl StreamHandler<Result<ws::Frame, WsProtocolError>> for WsClient {
+    fn handle(&mut self, msg: Result<ws::Frame, WsProtocolError>, ctx: &mut Self::Context) {
+        let msg = match msg {
+            Err(_) => {
+                ctx.stop();
+                return;
+            }
+            Ok(msg) => msg,
+        };
+
+        match msg {
+            ws::Frame::Text(text) => {
+                match serde_json::from_str::<dto::ws::Message>(std::str::from_utf8(text.as_ref()).unwrap()) {
+                    Ok(message) => {
+                        match message {
+                            dto::ws::Message::HttpRequest { .. } => {
+                                debug!("Received HttpRequest message: {:?}", message);
+                            }
+                        }
+                    }
+                    Err(_) => {}
+                }
+            }
+            ws::Frame::Ping(_) => { self.sink.write(Pong("".into())).unwrap(); }
+            _ => {}
+        }
+    }
+}
 
 pub struct Connection {
     id: String,
@@ -11,44 +77,48 @@ pub struct Connection {
     upstream_port: Option<String>,
 }
 
-fn base_url(options: &Options) -> Url {
+fn base_url(proto: &str, options: &Options) -> String {
     let scheme = if options.no_ssl {
-        "http"
+        format!("{}", proto)
     } else {
-        "https"
+        format!("{}s", proto)
     };
-    Url::parse(format!("{}://{}", scheme, options.host).deref()).unwrap()
+    format!("{}://{}", scheme, options.host)
 }
 
-fn client() -> reqwest::blocking::Client {
-    let mut header_map = reqwest::header::HeaderMap::new();
-    header_map.append(reqwest::header::CONTENT_TYPE, "application/json".parse().unwrap());
-    reqwest::blocking::Client::builder().default_headers(header_map).build().unwrap()
+fn client() -> awc::Client {
+    awc::Client::builder().add_default_header((CONTENT_TYPE, "application/json")).finish()
 }
 
 impl Connection {
-    pub fn create(options: &Options) -> Result<Self, Error> {
-        let mut url = base_url(&options);
-        url.set_path("/connections");
-        let result = client().post(url).json(
-            &shared::dto::connection::CreateConnection {
+    pub async fn create(options: &Options) -> Result<Self, Error> {
+        let url = format!("{}/connections", base_url(&"http", &options));
+        let connection_view: ShowView = client().post(url).send_json(
+            &serde_json::json!(shared::dto::connection::CreateConnection {
                 subdomain: options.subdomain.clone(),
                 proxied_port: options.port.clone(),
-            }
-        ).send();
-        match result {
-            Ok(v) => {
-                let connection_view: ShowView = v.json()?;
-                Ok(connection_view.into())
-            }
-            Err(e) => Err(e.into())
-        }
+            })
+        ).await?.json().await?;
+        Ok(connection_view.into())
     }
 
-    pub fn delete(&self, options: &Options) -> Result<Response, Error> {
-        let mut url = base_url(&options);
-        url.set_path(format!("/connections/{}", self.id).deref());
-        client().delete(url).send().map_err(Error::from)
+    pub async fn subscribe(&self, options: &Options) -> Result<(), Error> {
+        let (_, mut ws_connection) = awc::Client::new()
+            .ws(format!("{}/connections/{}/subscribe", base_url(&"ws", options), self.id))
+            .connect()
+            .await?;
+
+        let (sink, stream): (WsFramedSink, WsFramedStream) = ws_connection.split();
+        let addr = WsClient::start(sink, stream);
+
+        let _ = actix_rt::signal::ctrl_c().await?;
+
+        Ok(())
+    }
+
+    pub async fn delete(&self, options: &Options) -> Result<(), Error> {
+        let url = format!("{}/connections/{}", base_url(&"http", &options), self.id);
+        client().delete(url).send().await.map(|_| ()).map_err(Error::from)
     }
 }
 

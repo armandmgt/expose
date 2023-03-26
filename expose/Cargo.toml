@@ -13,7 +13,12 @@ clap-verbosity-flag = "2.0.0"
 clap_complete = "4.1.5"
 log = "0.4.17"
 env_logger = "0.10.0"
-reqwest = { version = "0.11.14", features = ["blocking", "json", "rustls", "rustls-tls"] }
+awc = "3.1.1"
+actix-rt = "2.8.0"
 serde = "1.0.157"
 serde_json = "1.0.94"
 shared = { path = "../shared" }
+futures-util = "0.3.27"
+actix-codec = "0.5.0"
+actix = "0.13.0"
+thiserror = "1.0.40"

@@ -2,9 +2,11 @@ mod settings;
 mod models;
 mod views;
 mod controllers;
+mod websockets;
 mod errors;
 mod util;
 
+use actix::Actor;
 use actix_web::{App, HttpServer, middleware, web};
 use actix_web::middleware::TrailingSlash::Trim;
 use sqlx::postgres::PgPoolOptions;
@@ -21,13 +23,17 @@ async fn main() -> std::io::Result<()> {
         .expect("error creating db pool");
     sqlx::migrate!().run(&pool).await.unwrap();
 
+    let server = websockets::server::ConnectionsWsServer::new().start();
+
     let pool_data = web::Data::new(pool);
     let settings_data = web::Data::new(settings);
+    let server_data = web::Data::new(server);
 
     HttpServer::new(move || {
         App::new()
             .app_data(pool_data.clone())
             .app_data(settings_data.clone())
+            .app_data(server_data.clone())
             .wrap(middleware::NormalizePath::new(Trim))
             .wrap(middleware::Logger::new(
                 r#"%a %{X-Real-IP}i %t "%r" %s %b "%{Referer}i" "%{User-Agent}i" %T"#,
