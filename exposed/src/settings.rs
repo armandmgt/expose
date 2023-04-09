@@ -4,25 +4,27 @@ use serde::{Deserialize};
 use std::path::PathBuf;
 use std::env;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Database {
     pub url: Url,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Http {
     pub url: Url,
+    pub bind_addr: Option<String>,
+    pub bind_port: Option<u16>,
     pub secure: bool,
     pub secret: String,
     pub vhost_suffix: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Files {
     pub static_dir: PathBuf,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Settings {
     pub debug: bool,
     pub database: Database,

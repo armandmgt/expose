@@ -3,6 +3,7 @@ mod error;
 
 use actix_rt;
 use clap::Parser;
+use log::debug;
 use crate::connection::Connection;
 use crate::error::Error;
 
@@ -36,6 +37,7 @@ async fn main() -> Result<(), Error> {
         .init();
 
     let connection = Connection::create(&options).await?;
+    debug!("Connection successfully created");
     connection.subscribe(&options).await?;
     connection.delete(&options).await
 }

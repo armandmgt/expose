@@ -3,10 +3,12 @@
     "url": "postgres://dummy"
   },
   "http": {
-    "url": "http://proxy.armandmgt.me:8080",
+    "url": "https://cashbee.proxy.armandmgt.fr:8080",
+    "bind_addr": "127.0.0.1",
+    "bind_port": 8080,
     "secure": false,
     "secret": "",
-    "vhost_suffix": ".proxy.armandmgt.me"
+    "vhost_suffix": ".proxy.armandmgt.fr"
   },
   "files": {
     "static_dir": "static"

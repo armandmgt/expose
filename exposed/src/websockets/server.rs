@@ -1,11 +1,13 @@
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::ops::Deref;
-use actix::{Actor, Context, Handler, Recipient};
+use actix::{Actor, Context, Handler, Message, MessageResult, Recipient};
+use actix_web::dev::RequestHead;
 use actix_web::web;
-use tracing::{debug};
-use crate::websockets::messages::{HttpRequestMessage, SubscribeToConnection};
+use tokio::sync::mpsc;
+use tracing::debug;
+use crate::websockets;
 
-type Client = Recipient<HttpRequestMessage>;
+type Client = Recipient<websockets::session::HttpRequestRequireProxy>;
 
 #[derive(Debug)]
 pub struct ConnectionsWsServer {
@@ -16,30 +18,23 @@ impl ConnectionsWsServer {
     pub fn new() -> Self {
         Self { subscriptions: HashMap::new() }
     }
-
-    /// Send request to subscribers
-    fn send_request(&self, id: &String, request: &web::Bytes) {
-        if let Some(subscriptions) = self.subscriptions.get(id) {
-            debug!("Handling HttpRequestMessage: found client connection subscriptions {:?}", subscriptions);
-            for client in subscriptions {
-                debug!("Handling HttpRequestMessage: sending to client {:?}", client);
-                client.do_send(HttpRequestMessage {
-                    connection_id: id.clone(),
-                    request: request.clone(),
-                });
-            }
-        }
-    }
 }
 
 impl Actor for ConnectionsWsServer {
     type Context = Context<Self>;
 }
 
+#[derive(Clone, Message, Debug)]
+#[rtype(result = "()")]
+pub struct SubscribeToConnection {
+    pub connection_id: String,
+    pub client_addr: Client,
+}
+
 impl Handler<SubscribeToConnection> for ConnectionsWsServer {
     type Result = ();
 
-    fn handle(&mut self, msg: SubscribeToConnection, ctx: &mut Self::Context) {
+    fn handle(&mut self, msg: SubscribeToConnection, _ctx: &mut Self::Context) {
         debug!("Handling SubscribeToConnection: {:?}", msg);
 
         if !self.subscriptions.contains_key(msg.connection_id.deref()) {
@@ -52,11 +47,27 @@ impl Handler<SubscribeToConnection> for ConnectionsWsServer {
     }
 }
 
-impl Handler<HttpRequestMessage> for ConnectionsWsServer {
-    type Result = ();
+#[derive(Clone, Message, Debug)]
+#[rtype(result = "(mpsc::UnboundedSender<web::Bytes>, mpsc::UnboundedReceiver<web::Bytes>)")]
+pub struct HttpRequest {
+    pub connection_id: String,
+    pub http_head: RequestHead,
+}
 
-    fn handle(&mut self, msg: HttpRequestMessage, ctx: &mut Self::Context) -> Self::Result {
-        debug!("Handling HttpRequestMessage: {:?}", msg);
-        self.send_request(&msg.connection_id, &msg.request)
+impl Handler<HttpRequest> for ConnectionsWsServer {
+    type Result = MessageResult<HttpRequest>;
+
+    fn handle(&mut self, msg: HttpRequest, _ctx: &mut Self::Context) -> Self::Result {
+        debug!("Handling HttpRequest: {:?}", msg);
+
+        let (tx, rx) = mpsc::unbounded_channel();
+        if let Some(subscriptions) = self.subscriptions.get(msg.connection_id.deref()) {
+            debug!("Handling HttpRequest: found client connection subscriptions {:?}", subscriptions);
+            for client in subscriptions {
+                debug!("Handling HttpRequest: sending to client {:?}", client);
+                client.do_send(websockets::session::HttpRequestRequireProxy{});
+            }
+        }
+        MessageResult((tx, rx))
     }
 }

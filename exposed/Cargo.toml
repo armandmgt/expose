@@ -25,7 +25,7 @@ futures-util = "0.3.27"
 shared = { path = "../shared" }
 actix-web-actors = "4.2.0"
 actix = "0.13.0"
-actix-broker = "0.4.3"
+tokio = { version = "1.27.0" }
 
 [dependencies.sqlx]
 version = "0.6.2"

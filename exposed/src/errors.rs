@@ -32,6 +32,8 @@ pub enum AppError {
     DatabaseError(#[from] sqlx::Error),
     #[error("actor error")]
     ActixMailboxError(#[from] actix::MailboxError),
+    #[error("thread error {0}")]
+    JoinError(#[from] tokio::task::JoinError),
     #[error("not found")]
     NotFound,
     #[error("missing permission: {0}")]

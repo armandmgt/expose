@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use actix::{Actor, ActorContext, Addr, AsyncContext, Context, StreamHandler};
 use actix::io::SinkWrite;
 use actix_codec::Framed;
@@ -103,7 +104,9 @@ impl Connection {
     }
 
     pub async fn subscribe(&self, options: &Options) -> Result<(), Error> {
-        let (_, mut ws_connection) = awc::Client::new()
+        debug!("Connecting to ws endpoint {}", format!("{}/connections/{}/subscribe", base_url(&"ws", options), self.id));
+        let (_, ws_connection) = awc::Client::builder()
+            .max_http_version(awc::http::Version::HTTP_11).finish()
             .ws(format!("{}/connections/{}/subscribe", base_url(&"ws", options), self.id))
             .connect()
             .await?;

@@ -1,12 +1,10 @@
-use std::ops::Deref;
 use std::time::Instant;
-use actix::{Actor, ActorContext, ActorFutureExt, Addr, AsyncContext, ContextFutureSpawner, fut, Handler, StreamHandler, WrapFuture};
+use actix::{Actor, ActorContext, ActorFutureExt, Addr, AsyncContext, ContextFutureSpawner, fut, Handler, Message, StreamHandler, WrapFuture};
 use actix_web_actors::ws;
 use actix_web_actors::ws::{CloseCode, CloseReason};
 use tracing::{debug, error};
 use shared::dto;
-use crate::websockets::messages::{HttpRequestMessage, SubscribeToConnection};
-use crate::websockets::server::ConnectionsWsServer;
+use crate::websockets::server::{ConnectionsWsServer, SubscribeToConnection};
 
 pub struct ConnectionSession {
     pub alive: Instant,
@@ -43,11 +41,16 @@ impl Actor for ConnectionSession {
     }
 }
 
-impl Handler<HttpRequestMessage> for ConnectionSession {
+#[derive(Clone, Message, Debug)]
+#[rtype(result = "()")]
+pub struct HttpRequestRequireProxy {
+}
+
+impl Handler<HttpRequestRequireProxy> for ConnectionSession {
     type Result = ();
 
-    fn handle(&mut self, msg: HttpRequestMessage, ctx: &mut Self::Context) -> Self::Result {
-        match serde_json::to_string(&dto::ws::Message::http_request(msg.request.deref())) {
+    fn handle(&mut self, _msg: HttpRequestRequireProxy, ctx: &mut Self::Context) -> Self::Result {
+        match serde_json::to_string(&dto::ws::Message::http_request()) {
             Ok(json) => ctx.text(json),
             Err(_) => error!("Failed serializing request content"),
         }

@@ -1,4 +1,4 @@
-GET http://proxy.armandmgt.me:8080/connections
+GET https://cashbee.proxy.armandmgt.fr/connections
 Content-Type: application/json
 Accept: application/json
 
