@@ -10,5 +10,8 @@
 			]
 		}
 	},
-	"forwardPorts": [8080]
+	"forwardPorts": [
+		8080
+	],
+	"remoteUser": "root"
 }
