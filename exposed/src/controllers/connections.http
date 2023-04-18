@@ -1,4 +1,4 @@
-GET https://cashbee.proxy.armandmgt.fr/connections
+GET http://proxy.armandmgt.me:8080/connections
 Content-Type: application/json
 Accept: application/json
 
@@ -15,6 +15,6 @@ Accept: application/json
 
 ###
 
-DELETE http://proxy.armandmgt.me:8080/connections/92800fa9-b465-4cb0-8c9b-92587447ee10
+DELETE http://proxy.armandmgt.me:8080/connections/f810c5a7-4b14-4561-88c5-20494a45bcae
 Content-Type: application/json
 Accept: application/json

@@ -38,6 +38,6 @@ async fn main() -> Result<(), Error> {
 
     let connection = Connection::create(&options).await?;
     debug!("Connection successfully created");
-    connection.subscribe(&options).await?;
+    // connection.subscribe(&options).await?;
     connection.delete(&options).await
 }

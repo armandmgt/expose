@@ -1,6 +1,6 @@
 use config::Config;
 use url::Url;
-use serde::{Deserialize};
+use serde::Deserialize;
 use std::path::PathBuf;
 use std::env;
 

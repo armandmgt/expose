@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use actix::{Actor, ActorContext, Addr, AsyncContext, Context, StreamHandler};
 use actix::io::SinkWrite;
 use actix_codec::Framed;
@@ -112,7 +111,7 @@ impl Connection {
             .await?;
 
         let (sink, stream): (WsFramedSink, WsFramedStream) = ws_connection.split();
-        let addr = WsClient::start(sink, stream);
+        WsClient::start(sink, stream);
 
         let _ = actix_rt::signal::ctrl_c().await?;
 

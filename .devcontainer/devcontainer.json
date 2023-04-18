@@ -1,0 +1,14 @@
+{
+	"name": "Rust",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "dev",
+	"overrideCommand": true,
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"rust-lang.rust-analyzer"
+			]
+		}
+	},
+	"forwardPorts": [8080]
+}
