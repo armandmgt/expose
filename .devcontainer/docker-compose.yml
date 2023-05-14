@@ -20,7 +20,7 @@ services:
     volumes:
       - db_data:/var/run/postgresql/data
     ports:
-      - "5433:5432"
+      - "5434:5432"
 
 volumes:
   db_data:

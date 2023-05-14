@@ -16,6 +16,7 @@ use tracing::info;
 async fn main() -> std::io::Result<()> {
     dotenv::dotenv().ok();
     env_logger::init();
+
     let settings = settings::Settings::new().expect("error loading settings");
 
     let pool = PgPoolOptions::new()

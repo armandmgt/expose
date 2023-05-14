@@ -26,7 +26,6 @@ pub struct Files {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Settings {
-    pub debug: bool,
     pub database: Database,
     pub http: Http,
     pub files: Files,
