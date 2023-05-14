@@ -5,4 +5,6 @@ RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends postgresql-client nodejs yarn
 
+RUN cargo install cargo-watch
+
 CMD ["sleep", "infinity"]
