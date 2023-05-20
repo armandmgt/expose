@@ -3,11 +3,10 @@
 	"tasks": [
 		{
 			"type": "cargo",
-			"command": "watch",
+			"command": "run",
 			"args": [
-				"-c",
-				"-x",
-				"run --bin exposed"
+				"--bin",
+				"exposed"
 			],
 			"env": {
 				"RUST_LOG": "debug"

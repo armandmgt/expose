@@ -34,6 +34,8 @@ pub enum AppError {
     ActixMailboxError(#[from] actix::MailboxError),
     #[error("thread error {0}")]
     JoinError(#[from] tokio::task::JoinError),
+    #[error("awc error {0}")]
+    AwcError(#[from] awc::error::SendRequestError),
     #[error("not found")]
     NotFound,
     #[error("missing permission: {0}")]

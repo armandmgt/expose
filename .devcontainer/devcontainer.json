@@ -7,7 +7,9 @@
 		"vscode": {
 			"extensions": [
 				"rust-lang.rust-analyzer",
-				"ms-azuretools.vscode-docker"
+				"vadimcn.vscode-lldb",
+				"ms-azuretools.vscode-docker",
+				"humao.rest-client"
 			]
 		}
 	},

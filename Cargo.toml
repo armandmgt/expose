@@ -1,2 +1,5 @@
 [workspace]
 members = ["exposed", "expose", "shared"]
+
+[patch.crates-io]
+actix-http = { git = "https://github.com/armandmgt/actix-web" }
