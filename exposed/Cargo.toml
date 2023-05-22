@@ -23,7 +23,8 @@ serde = { version = "1.0.155", features = ["derive"] }
 serde_json = "1.0.94"
 shared = { path = "../shared" }
 thiserror = "1.0.39"
-tokio = { version = "1.27.0" }
+tokio = "1.27.0"
+tokio-util = "0.7.8"
 tracing = "0.1.37"
 thrussh = "0.34.0"
 thrussh-keys = "0.22.1"

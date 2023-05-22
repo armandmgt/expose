@@ -8,6 +8,7 @@ use thrussh::{
     ChannelId, CryptoVec,
 };
 use thrussh_keys::key;
+use tokio_util::sync::CancellationToken;
 use tracing::debug;
 
 use crate::errors::StaticError;
@@ -44,11 +45,17 @@ impl Server {
         }
     }
 
-    pub async fn start(self) -> Result<(), StaticError> {
+    pub async fn start(self, cancellation_token: CancellationToken) -> Result<(), StaticError> {
         debug!("sshd server key fingerprint: {:?}", self.config.keys);
-        thrussh::server::run(self.config.clone(), "0.0.0.0:2222", self)
-            .await
-            .map_err(Into::into)
+
+        tokio::select! {
+            res = thrussh::server::run(self.config.clone(), "0.0.0.0:2222", self) => {
+                res.map_err(Into::into)
+            },
+            _ = cancellation_token.cancelled() => {
+                Ok(())
+            }
+        }
     }
 }
 

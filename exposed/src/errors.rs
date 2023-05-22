@@ -3,6 +3,7 @@ use actix_web::http::StatusCode;
 use actix_web::HttpResponse;
 use actix_web::ResponseError;
 use askama::Template;
+use tokio::task::JoinError;
 use std::fmt::Debug;
 use thiserror::Error;
 use tracing::error;
@@ -72,8 +73,8 @@ pub type AppResponse<T = HttpResponse> = Result<T, AppError>;
 pub enum StaticError {
     #[error("io error {0}")]
     IoError(#[from] std::io::Error),
+    #[error("task join error {0}")]
+    TokioJoinError(#[from] JoinError),
     #[error("thrussh error {0}")]
     ThrusshError(#[from] thrussh::Error),
-    #[error("tokio timeout {0}")]
-    TokioTimeout(#[from] tokio::time::error::Elapsed),
 }

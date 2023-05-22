@@ -7,17 +7,40 @@ mod util;
 mod views;
 mod websockets;
 
-use std::pin::Pin;
-
 use actix::Actor;
 use actix_web::middleware::TrailingSlash::Trim;
 use actix_web::{middleware, web, App, HttpServer};
 use errors::StaticError;
 use futures_util::future::join_all;
-use futures_util::TryFutureExt;
 use sqlx::postgres::PgPoolOptions;
 use tokio::signal;
+use tokio_util::sync::CancellationToken;
 use tracing::{debug, info};
+
+fn http_server_task(
+    http_server: actix_web::dev::Server,
+    cancellation_token: CancellationToken,
+) -> tokio::task::JoinHandle<Result<(), StaticError>> {
+    let handle = http_server.handle();
+    tokio::task::spawn(async move {
+        tokio::select! {
+            res = http_server => {
+                res.map_err(Into::into)
+            },
+            _ = cancellation_token.cancelled() => {
+                handle.stop(true).await;
+                Ok(())
+            }
+        }
+    })
+}
+
+fn sshd_server_task(
+    sshd_server: sshd::Server,
+    cancellation_token: CancellationToken,
+) -> tokio::task::JoinHandle<Result<(), StaticError>> {
+    tokio::task::spawn(async move { sshd_server.start(cancellation_token).await })
+}
 
 #[actix_web::main]
 async fn main() -> Result<(), StaticError> {
@@ -65,18 +88,24 @@ async fn main() -> Result<(), StaticError> {
             .collect::<Vec<_>>()
             .join(", ")
     );
-    let tasks: Vec<Pin<Box<dyn std::future::Future<Output = Result<(), StaticError>>>>> = vec![
-        Box::pin(server.run().map_err(Into::into)),
-        Box::pin(sshd_server.start()),
-        Box::pin(
+    let cancellation_token = CancellationToken::new();
+    let tasks = vec![
+        http_server_task(server.run(), cancellation_token.clone()),
+        sshd_server_task(sshd_server, cancellation_token.clone()),
+        tokio::task::spawn(async move {
             signal::ctrl_c()
+                .await
                 .and_then(|_| {
                     debug!("received ctrl-c, should now shutdown");
-                    std::future::ready(Ok(()))
+                    cancellation_token.cancel();
+                    Ok(())
                 })
-                .map_err(Into::into),
-        ),
+                .map_err(Into::into)
+        }),
     ];
     let results = join_all(tasks).await;
-    results.into_iter().fold(Ok(()), Result::and)
+    results
+        .into_iter()
+        .map(|join_res| join_res?)
+        .fold(Ok(()), Result::and)
 }
