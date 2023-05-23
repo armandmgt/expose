@@ -1,8 +1,10 @@
 use config::Config;
-use url::Url;
 use serde::Deserialize;
-use std::path::PathBuf;
 use std::env;
+use std::path::PathBuf;
+use std::sync::Arc;
+use thrussh_keys::decode_secret_key;
+use url::Url;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Database {
@@ -20,6 +22,11 @@ pub struct Http {
 }
 
 #[derive(Debug, Deserialize, Clone)]
+pub struct Sshd {
+    pub server_key: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
 pub struct Files {
     pub static_dir: PathBuf,
 }
@@ -28,6 +35,7 @@ pub struct Files {
 pub struct Settings {
     pub database: Database,
     pub http: Http,
+    pub sshd: Sshd,
     pub files: Files,
 }
 
@@ -35,11 +43,12 @@ impl Settings {
     pub fn new() -> Result<Self, config::ConfigError> {
         dotenv::dotenv().ok();
         let env = env::var("ENV_TYPE").unwrap_or_else(|_| "development".into());
-        let s = Config::builder().
-            add_source(config::File::with_name("conf/default")).
-            add_source(config::File::with_name(&format!("conf/{}", env))).
-            add_source(config::Environment::with_prefix("APP")).
-            build().unwrap();
+        let s = Config::builder()
+            .add_source(config::File::with_name("conf/default"))
+            .add_source(config::File::with_name(&format!("conf/{}", env)))
+            .add_source(config::Environment::with_prefix("APP"))
+            .build()
+            .unwrap();
         s.try_deserialize::<Self>()
     }
 }

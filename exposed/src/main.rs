@@ -60,7 +60,7 @@ async fn main() -> Result<(), StaticError> {
     let shared_settings = web::Data::new(settings.clone());
     let db_pool = web::Data::new(db_pool);
     let ws_server = web::Data::new(ws_server);
-    let sshd_server = sshd::Server::new();
+    let sshd_server = sshd::Server::new(&settings.sshd)?;
 
     let server = HttpServer::new(move || {
         App::new()

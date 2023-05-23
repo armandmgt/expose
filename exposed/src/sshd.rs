@@ -9,9 +9,9 @@ use thrussh::{
 };
 use thrussh_keys::key;
 use tokio_util::sync::CancellationToken;
-use tracing::debug;
+use tracing::{debug, info};
 
-use crate::errors::StaticError;
+use crate::{errors::StaticError, settings};
 
 struct ClientHandle {
     id_tuple: (usize, ChannelId),
@@ -21,32 +21,33 @@ struct ClientHandle {
 #[derive(Clone)]
 pub struct Server {
     config: Arc<thrussh::server::Config>,
-    client_pubkey: Arc<thrussh_keys::key::PublicKey>,
+    server_pubkey: Arc<thrussh_keys::key::PublicKey>,
     client: Arc<Mutex<Option<ClientHandle>>>,
     id: usize,
 }
 
 impl Server {
-    pub fn new() -> Self {
-        let client_key = thrussh_keys::key::KeyPair::generate_ed25519().unwrap();
-        let client_pubkey = Arc::new(client_key.clone_public_key());
+    pub fn new(sshd_settings: &settings::Sshd) -> Result<Self, StaticError> {
+        let server_key = thrussh_keys::decode_secret_key(&sshd_settings.server_key, None)?;
+        let server_pubkey = Arc::new(server_key.clone_public_key());
         let mut config = thrussh::server::Config::default();
         config.connection_timeout = Some(std::time::Duration::from_secs(3));
         config.auth_rejection_time = std::time::Duration::from_secs(3);
-        config
-            .keys
-            .push(thrussh_keys::key::KeyPair::generate_ed25519().unwrap());
+        config.keys.push(server_key);
         let config = Arc::new(config);
-        Self {
+        Ok(Self {
             config,
-            client_pubkey,
+            server_pubkey,
             client: Arc::new(Mutex::new(None)),
             id: 0,
-        }
+        })
     }
 
     pub async fn start(self, cancellation_token: CancellationToken) -> Result<(), StaticError> {
-        debug!("sshd server key fingerprint: {:?}", self.config.keys);
+        info!(
+            "sshd server key fingerprint: {}",
+            self.server_pubkey.fingerprint()
+        );
 
         tokio::select! {
             res = thrussh::server::run(self.config.clone(), "0.0.0.0:2222", self) => {

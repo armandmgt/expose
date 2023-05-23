@@ -3,9 +3,9 @@ use actix_web::http::StatusCode;
 use actix_web::HttpResponse;
 use actix_web::ResponseError;
 use askama::Template;
-use tokio::task::JoinError;
 use std::fmt::Debug;
 use thiserror::Error;
+use tokio::task::JoinError;
 use tracing::error;
 
 fn internal_server_error(e: &dyn std::error::Error) -> HttpResponse {
@@ -77,4 +77,6 @@ pub enum StaticError {
     TokioJoinError(#[from] JoinError),
     #[error("thrussh error {0}")]
     ThrusshError(#[from] thrussh::Error),
+    #[error("thrussh_keys error {0}")]
+    ThrusshKeysError(#[from] thrussh_keys::Error),
 }
