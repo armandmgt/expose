@@ -2,13 +2,13 @@ use derive_more::Constructor;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct CreateConnection {
+pub struct Create {
     pub subdomain: String,
     pub proxied_port: String,
 }
 
 #[derive(Deserialize, Serialize, Constructor)]
-pub struct ConnectionView {
+pub struct View {
     pub id: String,
     pub subdomain: String,
     pub proxied_port: String,
@@ -17,5 +17,5 @@ pub struct ConnectionView {
 
 #[derive(Deserialize, Serialize, Constructor)]
 pub struct ShowView {
-    pub connection: ConnectionView,
+    pub connection: View,
 }

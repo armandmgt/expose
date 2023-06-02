@@ -1,9 +1,8 @@
+use anyhow::Result;
 use config::Config;
 use serde::Deserialize;
 use std::env;
 use std::path::PathBuf;
-use std::sync::Arc;
-use thrussh_keys::decode_secret_key;
 use url::Url;
 
 #[derive(Debug, Deserialize, Clone)]
@@ -23,6 +22,7 @@ pub struct Http {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Sshd {
+    pub server_port: u16,
     pub server_key: String,
 }
 
@@ -45,10 +45,9 @@ impl Settings {
         let env = env::var("ENV_TYPE").unwrap_or_else(|_| "development".into());
         let s = Config::builder()
             .add_source(config::File::with_name("conf/default"))
-            .add_source(config::File::with_name(&format!("conf/{}", env)))
+            .add_source(config::File::with_name(&format!("conf/{env}")))
             .add_source(config::Environment::with_prefix("APP"))
-            .build()
-            .unwrap();
+            .build()?;
         s.try_deserialize::<Self>()
     }
 }

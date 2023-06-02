@@ -1,5 +1,5 @@
 pub use sqlx::types::Uuid;
-use sqlx::{PgPool, Result, FromRow};
+use sqlx::{FromRow, PgPool, Result};
 
 #[derive(FromRow)]
 pub struct Connection {
@@ -24,7 +24,7 @@ impl Connection {
     pub async fn insert(&self, pool: &PgPool) -> Result<()> {
         // language=PostgreSQL
         sqlx::query("INSERT INTO connections (id, subdomain, proxied_port) VALUES ($1, $2, $3)")
-            .bind(&self.id)
+            .bind(self.id)
             .bind(&self.subdomain)
             .bind(&self.proxied_port)
             .execute(pool)
@@ -59,7 +59,7 @@ impl Connection {
     pub async fn delete(&self, pool: &PgPool) -> Result<()> {
         // language=PostgreSQL
         sqlx::query("DELETE FROM connections WHERE id = $1")
-            .bind(&self.id)
+            .bind(self.id)
             .execute(pool)
             .await?;
 

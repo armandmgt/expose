@@ -1,12 +1,14 @@
 mod connections;
 mod proxy;
 
-use actix_web::{HttpResponse, get, web};
-use actix_files as fs;
+use crate::errors::AppResponse;
 use crate::settings::Settings;
-use crate::views::*;
-use crate::errors::*;
+use crate::views::Index;
+use actix_files as fs;
+use actix_web::{get, web, HttpResponse};
+use askama::Template;
 
+#[allow(clippy::unused_async)]
 #[get("/")]
 pub async fn index() -> AppResponse {
     let template = Index::new("Home");

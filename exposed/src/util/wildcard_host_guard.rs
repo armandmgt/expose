@@ -1,4 +1,3 @@
-use std::ops::Deref;
 use actix_web::dev::RequestHead;
 use actix_web::guard::{Guard, GuardContext};
 use actix_web::http::{header, Uri};
@@ -25,13 +24,12 @@ pub struct WildcardHostGuard {
 
 impl Guard for WildcardHostGuard {
     fn check(&self, ctx: &GuardContext<'_>) -> bool {
-        let req_host_uri = match get_host_uri(ctx.head()) {
-            Some(uri) => uri,
-            None => return false,
+        let Some(req_host_uri) = get_host_uri(ctx.head()) else {
+            return false;
         };
 
         match req_host_uri.host() {
-            Some(uri_host) if uri_host.ends_with(self.host.deref()) => {}
+            Some(uri_host) if uri_host.ends_with(&*self.host) => {}
             _ => return false,
         }
         true

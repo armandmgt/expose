@@ -9,7 +9,7 @@
 				"exposed"
 			],
 			"env": {
-				"RUST_LOG": "debug"
+				"RUST_LOG": "debug,thrussh=debug"
 			},
 			"problemMatcher": [
 				"$rustc",

@@ -11,6 +11,7 @@
     "vhost_suffix": ".proxy.armandmgt.me"
   },
   "sshd": {
+    "server_port": "2222",
     "server_key": ""
   },
   "files": {

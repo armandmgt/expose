@@ -5,22 +5,21 @@ mod settings;
 mod sshd;
 mod util;
 mod views;
-mod websockets;
 
-use actix::Actor;
 use actix_web::middleware::TrailingSlash::Trim;
 use actix_web::{middleware, web, App, HttpServer};
-use errors::StaticError;
+use anyhow::Result;
 use futures_util::future::join_all;
 use sqlx::postgres::PgPoolOptions;
 use tokio::signal;
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, info};
 
+#[allow(clippy::redundant_pub_crate)]
 fn http_server_task(
     http_server: actix_web::dev::Server,
     cancellation_token: CancellationToken,
-) -> tokio::task::JoinHandle<Result<(), StaticError>> {
+) -> tokio::task::JoinHandle<Result<()>> {
     let handle = http_server.handle();
     tokio::task::spawn(async move {
         tokio::select! {
@@ -38,35 +37,30 @@ fn http_server_task(
 fn sshd_server_task(
     sshd_server: sshd::Server,
     cancellation_token: CancellationToken,
-) -> tokio::task::JoinHandle<Result<(), StaticError>> {
+) -> tokio::task::JoinHandle<Result<()>> {
     tokio::task::spawn(async move { sshd_server.start(cancellation_token).await })
 }
 
 #[actix_web::main]
-async fn main() -> Result<(), StaticError> {
+async fn main() -> Result<()> {
     dotenv::dotenv().ok();
     env_logger::init();
 
-    let settings = settings::Settings::new().expect("error loading settings");
+    let settings = settings::Settings::new()?;
 
     let db_pool = PgPoolOptions::new()
         .connect(settings.database.url.as_str())
-        .await
-        .expect("error creating db pool");
-    sqlx::migrate!().run(&db_pool).await.unwrap();
-
-    let ws_server = websockets::server::ConnectionsWsServer::new().start();
+        .await?;
+    sqlx::migrate!().run(&db_pool).await?;
 
     let shared_settings = web::Data::new(settings.clone());
     let db_pool = web::Data::new(db_pool);
-    let ws_server = web::Data::new(ws_server);
     let sshd_server = sshd::Server::new(&settings.sshd)?;
 
     let server = HttpServer::new(move || {
         App::new()
             .app_data(db_pool.clone())
             .app_data(shared_settings.clone())
-            .app_data(ws_server.clone())
             .wrap(middleware::NormalizePath::new(Trim))
             .wrap(middleware::Logger::new(
                 r#"%a %{X-Real-IP}i %t "%r" %s %b "%{Referer}i" "%{User-Agent}i" %T"#,
@@ -76,7 +70,10 @@ async fn main() -> Result<(), StaticError> {
     })
     .disable_signals()
     .bind((
-        settings.http.bind_addr.unwrap_or("127.0.0.1".to_string()),
+        settings
+            .http
+            .bind_addr
+            .unwrap_or_else(|| "127.0.0.1".to_string()),
         settings.http.bind_port.unwrap_or(8080),
     ))?;
     info!(
@@ -95,10 +92,9 @@ async fn main() -> Result<(), StaticError> {
         tokio::task::spawn(async move {
             signal::ctrl_c()
                 .await
-                .and_then(|_| {
+                .map(|_| {
                     debug!("received ctrl-c, should now shutdown");
                     cancellation_token.cancel();
-                    Ok(())
                 })
                 .map_err(Into::into)
         }),

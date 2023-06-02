@@ -1,9 +1,9 @@
 use derive_more::Constructor;
-use serde::{Serialize};
+use serde::Serialize;
+use shared::dto::connection;
 pub use sqlx::types::Uuid;
-use shared::dto::connection::ConnectionView;
 
 #[derive(Serialize, Constructor)]
 pub struct IndexView<'a> {
-    pub connections: &'a Vec<ConnectionView>,
+    pub connections: &'a Vec<connection::View>,
 }

@@ -4,9 +4,6 @@ use crate::models::connection::Connection;
 use crate::settings::Settings;
 use crate::util;
 use crate::util::wildcard_host_guard::get_host_uri;
-use crate::websockets::server::ConnectionsWsServer;
-use actix::Addr;
-use actix_web::HttpResponseBuilder;
 use actix_web::http::header::HeaderMap;
 use actix_web::http::header::HeaderName;
 use actix_web::http::header::CONNECTION;
@@ -18,9 +15,11 @@ use actix_web::http::header::TRANSFER_ENCODING;
 use actix_web::http::header::X_FORWARDED_FOR;
 use actix_web::http::uri::Parts;
 use actix_web::http::Uri;
+use actix_web::HttpResponseBuilder;
 use actix_web::{web, HttpRequest, HttpResponse};
+use anyhow::Context;
+use anyhow::Result;
 use sqlx::PgPool;
-use std::ops::Deref;
 use std::time::Duration;
 
 const HOP_BY_HOP_HEADERS: [HeaderName; 6] = [
@@ -32,22 +31,31 @@ const HOP_BY_HOP_HEADERS: [HeaderName; 6] = [
     TRANSFER_ENCODING,
 ];
 
-fn forward_uri_value(connection: &Connection, req: &HttpRequest) -> Uri {
+static STATIC_X_FORWARDED_FOR: HeaderName = X_FORWARDED_FOR;
+
+fn forward_uri_value(connection: &Connection, req: &HttpRequest) -> Result<Uri> {
     let mut forward_url_parts: Parts = req.uri().clone().into();
 
-    forward_url_parts.scheme = Some("http".parse().unwrap());
-    // let proxy_host = format!("localhost:{}", connection.proxy_port.as_ref().unwrap());
-    let proxy_host = "httpbin.org:80";
-    forward_url_parts.authority = Some(proxy_host.parse().unwrap());
-    forward_url_parts.try_into().unwrap()
+    forward_url_parts.scheme = Some("http".parse()?);
+    let proxy_host = format!(
+        "localhost:{}",
+        connection
+            .proxy_port
+            .as_ref()
+            .context("No proxy port available for connection")?
+    );
+    forward_url_parts.authority = Some(proxy_host.parse()?);
+    Uri::try_from(forward_url_parts).context("Failed creating proxy URI from parts")
 }
 
 fn x_forwarded_for_value(req: &HttpRequest) -> String {
     let mut result = String::new();
 
     for (key, value) in req.headers() {
-        if key == X_FORWARDED_FOR {
-            result.push_str(value.to_str().unwrap());
+        if key == STATIC_X_FORWARDED_FOR {
+            if let Ok(value) = value.to_str() {
+                result.push_str(value);
+            }
             break;
         }
     }
@@ -80,23 +88,24 @@ fn copy_except_hop_by_hop(source_headers: &HeaderMap, resp_builder: &mut HttpRes
     }
 }
 
+#[allow(clippy::future_not_send)]
 pub async fn process(
     req: HttpRequest,
     payload: web::Payload,
-    conn_server: web::Data<Addr<ConnectionsWsServer>>,
     db: web::Data<PgPool>,
     settings: web::Data<Settings>,
 ) -> AppResponse {
-    let host = get_host_uri(req.head()).unwrap().to_string();
-    let host_without_port = host.splitn(2, ':').next().unwrap();
-    let subdomain = match host_without_port.strip_suffix(&settings.http.vhost_suffix.deref()) {
-        Some(value) => value,
-        None => return Ok(HttpResponse::NotFound().finish()),
+    let host = get_host_uri(req.head())
+        .context("Could parse Host")?
+        .to_string();
+    let host_without_port = host.split(':').next().context("Could not get subdomain")?;
+    let Some(subdomain) = host_without_port.strip_suffix(&*settings.http.vhost_suffix) else {
+        return Ok(HttpResponse::NotFound().finish())
     };
     let connection = Connection::get_by_subdomain(&db, subdomain)
         .await
         .map_err(|_| AppError::NotFound)?;
-    if let None = connection.proxy_port {
+    if connection.proxy_port.is_none() {
         return Err(AppError::NotFound);
     }
 
@@ -104,7 +113,7 @@ pub async fn process(
         .request_from(req.uri(), req.head())
         .no_decompress()
         .timeout(Duration::from_secs(60))
-        .uri(forward_uri_value(&connection, &req))
+        .uri(forward_uri_value(&connection, &req)?)
         .insert_header_if_none((actix_web::http::header::USER_AGENT, ""))
         .append_header((X_FORWARDED_FOR, x_forwarded_for_value(&req)));
 
@@ -115,7 +124,6 @@ pub async fn process(
         .send_stream(payload)
         .await?
         .timeout(Duration::from_secs(10));
-
 
     let mut resp_builder = HttpResponse::build(backend_resp.status());
 
