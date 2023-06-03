@@ -2,10 +2,7 @@ version: '3.7'
 
 services:
   proxy:
-    build:
-      context: .
-      labels:
-        - expose=exposed
+    image: ghcr.io/armandmgt/exposed
     volumes:
       - ./conf/production.json:/app/conf/production.json
   db:
