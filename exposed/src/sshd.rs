@@ -6,7 +6,7 @@ use russh::{
     server::{self, Auth, Handle, Session},
     ChannelMsg,
 };
-use tokio::net::TcpStream;
+use tokio::{io::AsyncWriteExt, net::TcpStream};
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, info};
 
@@ -127,7 +127,7 @@ async fn handler_tcpip_forward_stream(
     client_handle: Handle,
     mut tcp_stream: TcpStream,
     addr: SocketAddr,
-) -> Result<(), StaticError> {
+) -> Result<()> {
     let (remote_addr, remote_port) = (addr.ip(), addr.port());
     debug!("handler_tcpip_forward_stream: {remote_addr} {remote_port} / {local_addr} {local_port}");
     let mut channel = client_handle
@@ -159,12 +159,13 @@ async fn handler_tcpip_forward_stream(
                 match data {
                     Some(ChannelMsg::Data { data }) => {
                         match write_half.try_write(&data) {
-                            Ok(_) => todo!(),
-                            Err(_) => todo!(),
+                            Ok(_) => {},
+                            Err(e) => return Err(e.into()),
                         }
                     },
                     Some(ChannelMsg::Eof) => {
-                        todo!();
+                        tcp_stream.shutdown().await?;
+                        return Ok(());
                     },
                     Some(_) | None => { return Ok(()); },
                 }
