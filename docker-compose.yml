@@ -1,17 +1,20 @@
 version: '3.7'
 
 services:
+  proxy:
+    build:
+      labels:
+        - expose=exposed
+    volumes:
+      - ./conf/production.json:/app/conf/production.json
   db:
     image: postgres:15-alpine
     environment:
-      - POSTGRES_AUTH_METHOD=trust
-      - POSTGRES_USER=dev
-      - POSTGRES_PASSWORD=dev
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=d${POSTGRES_PASSWORD}
       - POSTGRES_DB=expose
     volumes:
       - db_data:/var/run/postgresql/data
-    ports:
-      - "5433:5432"
 
 volumes:
   db_data:
