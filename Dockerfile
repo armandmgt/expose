@@ -13,7 +13,8 @@ WORKDIR /usr/src/app
 
 COPY . .
 
-RUN cargo build --release
+RUN --mount=type=cache,target=/root/.cargo \
+      ["cargo", "build", "--release"]
 
 
 FROM alpine
