@@ -21,4 +21,3 @@ ARG ${BIN_NAME}
 FROM alpine
 COPY --from=builder /usr/src/app/target/release/${BIN_NAME} ./
 CMD [ "./${BIN_NAME}" ]
-
