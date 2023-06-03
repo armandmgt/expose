@@ -1,5 +1,6 @@
 mod awc_client;
 mod connection;
+mod dto;
 mod error;
 
 use crate::{awc_client::client, connection::Connection};
