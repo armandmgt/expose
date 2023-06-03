@@ -11,3 +11,5 @@ static/css/main.min.css
 node_modules/
 
 tags
+.idea/
+.vscode/
