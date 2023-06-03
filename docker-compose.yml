@@ -3,6 +3,7 @@ version: '3.7'
 services:
   proxy:
     build:
+      context: .
       labels:
         - expose=exposed
     volumes:
