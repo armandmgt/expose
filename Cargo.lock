@@ -1095,6 +1095,7 @@ dependencies = [
  "serde_json",
  "shared",
  "thiserror",
+ "tokio",
 ]
 
 [[package]]

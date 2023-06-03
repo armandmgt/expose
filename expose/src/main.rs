@@ -41,7 +41,7 @@ pub struct Options {
     verbose: clap_verbosity_flag::Verbosity,
 }
 
-#[actix_rt::main]
+#[tokio::main]
 async fn main() -> Result<()> {
     let options = Options::parse();
     let awc_client = client();
