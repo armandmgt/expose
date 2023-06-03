@@ -43,7 +43,6 @@ fn sshd_server_task(
 
 #[actix_web::main]
 async fn main() -> Result<()> {
-    dotenv::dotenv().ok();
     env_logger::init();
 
     let settings = settings::Settings::new()?;

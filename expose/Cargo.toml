@@ -8,9 +8,6 @@ authors = ["Armand Mégrot <armand.megrot@gmail.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-actix = "0.13.0"
-actix-codec = "0.5.0"
-actix-rt = "2.8.0"
 anyhow = "1.0.71"
 awc = { version = "3.1.1", features = ["rustls"] }
 clap = { version = "4.1.10", features = ["cargo", "derive", "wrap_help"] }
@@ -19,7 +16,7 @@ clap-verbosity-flag = "2.0.0"
 env_logger = "0.10.0"
 futures-util = "0.3.27"
 log = "0.4.17"
-rustls = "0.20.8"
+rustls = "0.21.1"
 serde = "1.0.157"
 serde_json = "1.0.94"
 shared = { path = "../shared" }

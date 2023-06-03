@@ -41,7 +41,6 @@ pub struct Settings {
 
 impl Settings {
     pub fn new() -> Result<Self, config::ConfigError> {
-        dotenv::dotenv().ok();
         let env = env::var("ENV_TYPE").unwrap_or_else(|_| "development".into());
         let s = Config::builder()
             .add_source(config::File::with_name("conf/default"))
