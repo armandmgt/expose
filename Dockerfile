@@ -17,13 +17,8 @@ ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
 RUN --mount=type=cache,target=/root/.cargo \
       ["cargo", "build", "--release"]
 
-
+ARG ${BIN_NAME}
 FROM alpine
-COPY --from=builder /usr/src/app/target/release/exposed ./
-CMD [ "./exposed" ]
-LABEL expose="exposed"
+COPY --from=builder /usr/src/app/target/release/${BIN_NAME} ./
+CMD [ "./${BIN_NAME}" ]
 
-FROM alpine
-COPY --from=builder /usr/src/app/target/release/expose ./
-CMD [ "./expose" ]
-LABEL expose="expose"
