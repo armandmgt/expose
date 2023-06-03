@@ -37,7 +37,7 @@ jobs:
         with:
           context: .
           args:
-            - BIN_NAME=exposed
+            BIN_NAME: exposed
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
