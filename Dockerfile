@@ -13,6 +13,7 @@ WORKDIR /usr/src/app
 
 COPY . .
 
+ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
 RUN --mount=type=cache,target=/root/.cargo \
       ["cargo", "build", "--release"]
 
