@@ -9,6 +9,9 @@ COPY . .
 ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
 RUN cargo build --release
 
+
 FROM alpine
-COPY --from=builder /usr/src/app/target/release/expose ./
-ENTRYPOINT [ "./expose" ]
+
+COPY --from=builder /usr/src/app/target/release/expose /usr/bin/expose
+
+ENTRYPOINT [ "/usr/bin/expose" ]
