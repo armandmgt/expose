@@ -49,6 +49,8 @@ jobs:
           context: .
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            ARCH=amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
