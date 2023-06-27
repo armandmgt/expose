@@ -1,6 +1,7 @@
-use crate::dto;
-use crate::Options;
+use super::dto;
+use super::Options;
 use anyhow::{anyhow, Result};
+use serde_json::json;
 
 pub struct Connection {
     id: String,
@@ -22,9 +23,9 @@ impl Connection {
     #[allow(clippy::future_not_send)]
     pub async fn create(awc_client: &awc::Client, options: &Options) -> Result<Self> {
         let url = format!("{}/connections", base_url("http", options));
-        let connection_view: dto::connection::ShowView = awc_client
+        let connection_view: dto::ShowView = awc_client
             .post(url)
-            .send_json(&serde_json::json!(dto::connection::Create {
+            .send_json(&json!(dto::Create {
                 subdomain: options.subdomain.clone(),
                 proxied_port: options.port.clone(),
             }))
@@ -48,8 +49,8 @@ impl Connection {
     }
 }
 
-impl From<dto::connection::ShowView> for Connection {
-    fn from(value: dto::connection::ShowView) -> Self {
+impl From<dto::ShowView> for Connection {
+    fn from(value: dto::ShowView) -> Self {
         Self {
             id: value.connection.id,
             _subdomain: value.connection.subdomain,

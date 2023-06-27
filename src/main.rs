@@ -42,16 +42,18 @@ pub struct Options {
     verbose: clap_verbosity_flag::Verbosity,
 }
 
-#[tokio::main]
+#[actix_web::main]
 async fn main() -> Result<()> {
     let options = Options::parse();
-    let awc_client = client();
     env_logger::Builder::new()
         .filter_level(options.verbose.log_level_filter())
         .init();
 
+    let awc_client = client();
+
     let connection = Connection::create(&awc_client, &options).await?;
     debug!("Connection successfully created");
-    // connection.subscribe(&options).await?;
-    connection.delete(&awc_client, &options).await
+    connection.delete(&awc_client, &options).await?;
+
+    Ok(())
 }
