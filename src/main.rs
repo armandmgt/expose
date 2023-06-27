@@ -1,14 +1,21 @@
 mod awc_client;
 mod connection;
-mod dto;
 mod error;
+mod server_conf;
+mod ssh;
+mod utils;
+
+use std::sync::Arc;
 
 use crate::{awc_client::client, connection::Connection};
 use anyhow::Result;
 use clap::Parser;
+use futures_util::future::join_all;
 use log::debug;
+use tokio::signal;
+use tokio_util::sync::CancellationToken;
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Clone, Debug)]
 #[command(version, about)]
 pub struct Options {
     #[arg(help = "Local port where the request should be proxied.")]
@@ -42,6 +49,13 @@ pub struct Options {
     verbose: clap_verbosity_flag::Verbosity,
 }
 
+fn ssh_client_task(
+    ssh_client: ssh::Client,
+    cancellation_token: CancellationToken,
+) -> tokio::task::JoinHandle<Result<()>> {
+    tokio::task::spawn(async move { ssh_client.start(cancellation_token).await })
+}
+
 #[actix_web::main]
 async fn main() -> Result<()> {
     let options = Options::parse();
@@ -51,9 +65,33 @@ async fn main() -> Result<()> {
 
     let awc_client = client();
 
-    let connection = Connection::create(&awc_client, &options).await?;
+    let server_conf = server_conf::get(&awc_client, &options).await?;
+
+    let connection = Arc::new(Connection::create(&awc_client, &options).await?);
     debug!("Connection successfully created");
-    connection.delete(&awc_client, &options).await?;
+
+    let ssh_client = ssh::Client::new(options.clone(), server_conf, connection.clone());
+
+    let cancellation_token = CancellationToken::new();
+    let tasks = vec![
+        ssh_client_task(ssh_client, cancellation_token.clone()),
+        tokio::task::spawn(async move {
+            signal::ctrl_c()
+                .await
+                .map(|_| {
+                    debug!("received ctrl-c, should now shutdown");
+                    cancellation_token.cancel();
+                })
+                .map_err(Into::into)
+        }),
+    ];
+    let results = join_all(tasks).await;
+    let result = results
+        .into_iter()
+        .map(|join_res| join_res?)
+        .fold(Ok(()), Result::and);
+
+    connection.delete(&awc_client, &options).await.and(result)?;
 
     Ok(())
 }

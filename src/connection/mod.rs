@@ -1,5 +1,8 @@
-use super::dto;
-use super::Options;
+mod dto;
+
+use crate::utils::base_url;
+
+use crate::Options;
 use anyhow::{anyhow, Result};
 use serde_json::json;
 
@@ -10,18 +13,9 @@ pub struct Connection {
     _upstream_port: Option<String>,
 }
 
-fn base_url(proto: &str, options: &Options) -> String {
-    let scheme = if options.no_ssl {
-        proto.to_string()
-    } else {
-        format!("{proto}s")
-    };
-    format!("{scheme}://{}", options.host)
-}
-
 impl Connection {
     #[allow(clippy::future_not_send)]
-    pub async fn create(awc_client: &awc::Client, options: &Options) -> Result<Self> {
+    pub(crate) async fn create(awc_client: &awc::Client, options: &Options) -> Result<Self> {
         let url = format!("{}/connections", base_url("http", options));
         let connection_view: dto::ShowView = awc_client
             .post(url)
@@ -38,7 +32,7 @@ impl Connection {
     }
 
     #[allow(clippy::future_not_send)]
-    pub async fn delete(&self, awc_client: &awc::Client, options: &Options) -> Result<()> {
+    pub(crate) async fn delete(&self, awc_client: &awc::Client, options: &Options) -> Result<()> {
         let url = format!("{}/connections/{}", base_url("http", options), self.id);
         awc_client
             .delete(url)
