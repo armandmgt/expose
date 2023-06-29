@@ -7,46 +7,49 @@ use russh_keys::key;
 use std::sync::Arc;
 use tokio_util::sync::CancellationToken;
 
-use crate::{connection, server_conf, Options};
+use crate::{connection::Connection, server_conf, Options};
 
 #[derive(Constructor)]
 pub struct Client {
-    options: Options,
     server_conf: server_conf::Conf,
-    connection: Arc<connection::Connection>,
 }
 
-impl Client {
-    pub(crate) async fn start(self, cancellation_token: CancellationToken) -> Result<()> {
-        let config = russh::client::Config::default();
-        let config = Arc::new(config);
+pub async fn start(
+    options: Options,
+    server_conf: server_conf::Conf,
+    _connection: Arc<Connection>,
+    cancellation_token: CancellationToken,
+) -> Result<()> {
+    let config = russh::client::Config::default();
+    let config = Arc::new(config);
 
-        let host = self
-            .options
-            .host
-            .split(':')
-            .next()
-            .context("Could not get host part")?
-            .to_string();
-        let addr = (host, self.server_conf.sshd_port.parse()?);
-        let mut session = russh::client::connect(config, addr, self).await?;
+    let host = options
+        .host
+        .split(':')
+        .next()
+        .context("Could not get host part")?
+        .to_string();
+    let addr = (host, server_conf.sshd_port.parse()?);
+    let mut session = russh::client::connect(config, addr, Client { server_conf }).await?;
 
-        if session.authenticate_password("expose", "test").await? {
-            let mut channel = session.channel_open_session().await?;
-            channel.data(&b"Hello, world!"[..]).await?;
-            loop {
-                tokio::select! {
-                    msg = channel.wait() => {
-                        debug!("{msg:?}");
-                    },
-                    _ = cancellation_token.cancelled() => {
-                        return Ok(())
-                    }
+    if session
+        .authenticate_password("expose", options.secret.clone())
+        .await?
+    {
+        let mut channel = session.channel_open_session().await?;
+        channel.data(&b"Hello, world!"[..]).await?;
+        loop {
+            tokio::select! {
+                msg = channel.wait() => {
+                    debug!("{msg:?}");
+                },
+                _ = cancellation_token.cancelled() => {
+                    return Ok(())
                 }
             }
         }
-        Ok(())
     }
+    Ok(())
 }
 
 #[async_trait]

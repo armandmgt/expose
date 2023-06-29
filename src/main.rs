@@ -50,10 +50,12 @@ pub struct Options {
 }
 
 fn ssh_client_task(
-    ssh_client: ssh::Client,
+    options: Options,
+    server_conf: server_conf::Conf,
+    connection: Arc<Connection>,
     cancellation_token: CancellationToken,
 ) -> tokio::task::JoinHandle<Result<()>> {
-    tokio::task::spawn(async move { ssh_client.start(cancellation_token).await })
+    tokio::task::spawn(async move { ssh::start(options, server_conf, connection, cancellation_token).await })
 }
 
 #[actix_web::main]
@@ -70,11 +72,9 @@ async fn main() -> Result<()> {
     let connection = Arc::new(Connection::create(&awc_client, &options).await?);
     debug!("Connection successfully created");
 
-    let ssh_client = ssh::Client::new(options.clone(), server_conf, connection.clone());
-
     let cancellation_token = CancellationToken::new();
     let tasks = vec![
-        ssh_client_task(ssh_client, cancellation_token.clone()),
+        ssh_client_task(options.clone(), server_conf, connection.clone(), cancellation_token.clone()),
         tokio::task::spawn(async move {
             signal::ctrl_c()
                 .await
