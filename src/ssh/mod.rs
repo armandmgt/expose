@@ -1,6 +1,7 @@
 use anyhow::{Context, Ok, Result};
 use async_trait::async_trait;
 use derive_more::Constructor;
+use log::debug;
 use russh::{
     client::{self, Msg, Session},
     Channel,
@@ -42,12 +43,16 @@ pub async fn start(
         let forward_addr = format!("{}.{}", options.subdomain, options.host);
         tokio::select! {
             res = session.tcpip_forward(forward_addr.clone(), 0) => {
+                debug!("tcpip_forward request done");
                 res?;
             },
             _ = cancellation_token.cancelled() => {}
         };
+        cancellation_token.cancelled().await;
+        debug!("now cancelling tcpip_forward request");
         session.cancel_tcpip_forward(forward_addr, 0).await?;
     }
+    debug!("now quitting");
     Ok(())
 }
 
@@ -72,9 +77,15 @@ impl client::Handler for Client {
         _originator_port: u32,
         session: Session,
     ) -> Result<(Self, Session), Self::Error> {
+        debug!("now connecting locally");
         let mut stream = TcpStream::connect(format!("127.0.0.1:{}", self.options.port)).await?;
 
-        tokio::io::copy_bidirectional(&mut channel.into_stream(), &mut stream).await?;
+        debug!("now copying to local");
+        if let Err(e) = tokio::io::copy_bidirectional(&mut channel.into_stream(), &mut stream).await {
+            debug!("error copying: {e:?}");
+        }
+
+        debug!("finished copying to local, exiting");
         Ok((self, session))
     }
 }
